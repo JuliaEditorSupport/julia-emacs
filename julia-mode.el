@@ -2910,5 +2910,6 @@ before point. Returns nil if we're not within nested parens."
 
 ;; Local Variables:
 ;; coding: utf-8
+;; byte-compile-warnings: (not obsolete)
 ;; End:
 ;;; julia-mode.el ends here
