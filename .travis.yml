@@ -14,7 +14,6 @@ matrix:
 branches:
   only:
     - master
-    - travis
 
 install:
   - if [ "$EMACS" = 'emacs23' ]; then
