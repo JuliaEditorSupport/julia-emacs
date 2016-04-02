@@ -284,6 +284,14 @@ end"
     end
 end"))
 
+(ert-deftest julia--test-indent-after-commented-keyword ()
+  "Ignore keywords in comments when indenting."
+  (julia--should-indent
+   "# if foo
+a = 1"
+   "# if foo
+a = 1"))
+
 (defun julia--run-tests ()
   (interactive)
   (if (featurep 'ert)

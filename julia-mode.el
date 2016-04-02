@@ -408,8 +408,8 @@ a keyword if used as a field name, X.word, or quoted, :word."
        (member (current-word t) kw-list)
        ;; 'end' is not a keyword when used for indexing, e.g. foo[end-2]
        (or (not (equal (current-word t) "end"))
-           (not (julia-in-brackets))
-           (not (julia-in-comment)))))
+           (not (julia-in-brackets)))
+       (not (julia-in-comment))))
 
 ;; if backward-sexp gives an error, move back 1 char to move over the '('
 (defun julia-safe-backward-sexp ()
