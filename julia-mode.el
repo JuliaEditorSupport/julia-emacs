@@ -468,10 +468,26 @@ with it. Returns nil if we're not within nested parens."
             ((= (nth 0 parser-state) 0) nil) ;; top level
             (t
              (ignore-errors ;; return nil if any of these movements fail
-               (backward-up-list)
-               (forward-char)
+               (beginning-of-line)
                (skip-syntax-forward " ")
-               (current-column)))))))
+               (let ((possibly-close-paren-point (point)))
+                 (backward-up-list)
+                 (let ((open-paren-point (point)))
+                   (forward-char)
+                   (skip-syntax-forward " ")
+                   (if (eolp)
+                       (progn
+                         (up-list)
+                         (backward-char)
+                         (let ((paren-closed (= (point) possibly-close-paren-point)))
+                           (goto-char open-paren-point)
+                           (beginning-of-line)
+                           (skip-syntax-forward " ")
+                           (+ (current-column)
+                              (if paren-closed
+                                  0
+                                julia-indent-offset))))
+                     (current-column))))))))))
 
 (defun julia-prev-line-skip-blank-or-comment ()
   "Move point to beginning of previous line skipping blank lines

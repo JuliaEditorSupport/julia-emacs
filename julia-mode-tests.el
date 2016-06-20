@@ -183,6 +183,29 @@ baz )"
 foobar( bar,
         baz )"))
 
+(ert-deftest julia--test-indent-paren-newline ()
+  "python-mode-like indentation."
+  (julia--should-indent
+     "
+foobar(
+bar,
+baz)"
+     "
+foobar(
+    bar,
+    baz)")
+  (julia--should-indent
+     "
+foobar(
+bar,
+baz
+)"
+     "
+foobar(
+    bar,
+    baz
+)"))
+
 (ert-deftest julia--test-indent-equals ()
   "We should increase indent on a trailing =."
   (julia--should-indent
