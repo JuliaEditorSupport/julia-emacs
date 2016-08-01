@@ -292,6 +292,27 @@ a = 1"
    "# if foo
 a = 1"))
 
+(ert-deftest julia--test-indent-import-export-using ()
+  "Toplevel using, export, and import."
+  (julia--should-indent
+   "
+export bar, baz,
+quux"
+   "
+export bar, baz,
+    quux")
+  (julia--should-indent
+   "
+using Foo: bar ,
+baz,
+quux
+notpartofit"
+   "
+using Foo: bar ,
+    baz,
+    quux
+notpartofit"))
+
 (defun julia--run-tests ()
   (interactive)
   (if (featurep 'ert)
