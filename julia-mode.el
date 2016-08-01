@@ -416,6 +416,34 @@ a keyword if used as a field name, X.word, or quoted, :word."
   (if (condition-case nil (backward-sexp) (error t))
       (ignore-errors (backward-char))))
 
+(defun julia-following-import-export-using ()
+  "If the current line follows an `export` or `import` keyword
+with valid syntax, return the position of the keyword, otherwise
+`nil`. Works by stepping backwards through comma-separated
+symbol, gives up when this is not true."
+  ;; Implementation accepts a single Module: right after the keyword, and saves
+  ;; the module name for future use, but does not enforce that `export` has no
+  ;; module name.
+  (let ((done nil)                      ; find keyword or give up
+        (module nil))                   ; found "Module:"
+    (save-excursion
+      (beginning-of-line)
+      (while (and (not done) (< 0 (point)))
+        (julia-safe-backward-sexp)
+        (cond
+         ((looking-at (rx (or "import" "export" "using")))
+          (setf done (point)))
+         ((looking-at (rx (group (* (or word (syntax symbol)))) (0+ space) ":"))
+          (if module
+              (setf done 'broken)
+            (setf module (match-string-no-properties 1))))
+         ((looking-at (rx (* (or word (syntax symbol))) (0+ space) ","))
+          (when module (setf done 'broken)))
+         (t (setf done 'broken)))))
+    (if (eq done 'broken)
+        nil
+      done)))
+
 (defun julia-last-open-block-pos (min)
   "Return the position of the last open block, if one found.
 Do not move back beyond position MIN."
@@ -536,6 +564,11 @@ meaning always increase indent on TAB and decrease on S-TAB."
         ;; indenting inside strings
         (current-indentation)))))
 
+(defun julia-indent-import-export-using ()
+  "Indent offset for lines that follow `import` or `export`, otherwise nil."
+  (when (julia-following-import-export-using)
+    julia-indent-offset))
+
 (defun julia-indent-line ()
   "Indent current line of julia code."
   (interactive)
@@ -550,6 +583,8 @@ meaning always increase indent on TAB and decrease on S-TAB."
       (julia-paren-indent)
       ;; indent due to hanging operators (lines ending in an operator)
       (julia-indent-hanging)
+      ;; indent for import and export
+      (julia-indent-import-export-using)
       ;; Indent according to how many nested blocks we are in.
       (save-excursion
         (beginning-of-line)
