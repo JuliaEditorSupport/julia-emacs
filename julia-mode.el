@@ -496,13 +496,12 @@ with it. Returns nil if we're not within nested parens."
             ((= (nth 0 parser-state) 0) nil) ;; top level
             (t
              (ignore-errors ;; return nil if any of these movements fail
-               (beginning-of-line)
-               (skip-syntax-forward " ")
+               (forward-to-indentation 0)
                (let ((possibly-close-paren-point (point)))
                  (backward-up-list)
                  (let ((open-paren-point (point)))
                    (forward-char)
-                   (skip-syntax-forward " ")
+                   (skip-chars-forward " \t")
                    (if (eolp)
                        (progn
                          (up-list)
@@ -510,7 +509,7 @@ with it. Returns nil if we're not within nested parens."
                          (let ((paren-closed (= (point) possibly-close-paren-point)))
                            (goto-char open-paren-point)
                            (beginning-of-line)
-                           (skip-syntax-forward " ")
+                           (skip-chars-forward " \t")
                            (+ (current-column)
                               (if paren-closed
                                   0
