@@ -336,6 +336,39 @@ using Foo: bar ,
     quux
 notpartofit"))
 
+(ert-deftest julia--test-indent-block-inside-paren ()
+  "Nested parenthesis and blocks."
+  (julia--should-indent
+   "
+(
+begin
+1
+end
+)"
+   "
+(
+    begin
+        1
+    end
+)")
+  (julia--should-indent
+   "
+(
+begin
+(
+1
+)
+end
+)"
+"
+(
+    begin
+        (
+            1
+        )
+    end
+)"))
+
 (defun julia--run-tests ()
   (interactive)
   (if (featurep 'ert)
