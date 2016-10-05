@@ -315,6 +315,20 @@ a = 1"
    "# if foo
 a = 1"))
 
+(ert-deftest julia--test-indent-after-commented-end ()
+  "Ignore `end` in comments when indenting."
+  (julia--should-indent
+   "if foo
+a = 1
+#end
+b = 1
+end"
+   "if foo
+    a = 1
+    #end
+    b = 1
+end"))
+
 (ert-deftest julia--test-indent-import-export-using ()
   "Toplevel using, export, and import."
   (julia--should-indent

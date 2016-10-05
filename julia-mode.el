@@ -454,7 +454,8 @@ Do not move back beyond position MIN."
         (setq count
               (cond ((julia-at-keyword julia-block-start-keywords)
                      (+ count 1))
-                    ((equal (current-word t) "end")
+                    ((and (equal (current-word t) "end")
+                          (not (julia-in-comment)))
                      (- count 1))
                     (t count))))
       (if (> count 0)
