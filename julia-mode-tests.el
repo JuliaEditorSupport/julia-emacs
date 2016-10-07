@@ -59,7 +59,10 @@
   `(with-temp-buffer
      (julia-mode)
      (insert ,text)
-     (font-lock-ensure (point-min) (point-max))
+     (if (fbound 'font-lock-ensure)
+         (font-lock-ensure (point-min) (point-max))
+       (with-no-warnings
+         (font-lock-fontify-buffer)))
      (should (eq ,face (get-text-property ,pos 'face)))))
 
 (ert-deftest julia--test-indent-if ()
