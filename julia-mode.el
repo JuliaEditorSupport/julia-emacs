@@ -291,7 +291,7 @@ This function provides equivalent functionality, but makes no efforts to optimis
 
 (defconst julia-quoted-symbol-regex
   ;; :foo and :foo2 are valid, but :123 is not.
-  (rx (or whitespace "(" "[" "," "=")
+  (rx (or bol whitespace "(" "[" "," "=")
       (group ":" (or letter (syntax symbol)) (0+ (or word (syntax symbol))))))
 
 (defconst julia-font-lock-keywords
