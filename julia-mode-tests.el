@@ -59,7 +59,7 @@
   `(with-temp-buffer
      (julia-mode)
      (insert ,text)
-     (if (fbound 'font-lock-ensure)
+     (if (fboundp 'font-lock-ensure)
          (font-lock-ensure (point-min) (point-max))
        (with-no-warnings
          (font-lock-fontify-buffer)))
