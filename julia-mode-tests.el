@@ -54,6 +54,16 @@
        (should (equal (buffer-substring-no-properties (point-min) (point-max))
                       ,to)))))
 
+(defmacro julia--should-font-lock (text pos face)
+  "Assert that TEXT at position POS gets font-locked with FACE in `julia-mode'."
+  `(with-temp-buffer
+     (julia-mode)
+     (insert ,text)
+     (if (fboundp 'font-lock-ensure)
+         (font-lock-ensure (point-min) (point-max))
+       (with-no-warnings
+         (font-lock-fontify-buffer)))
+     (should (eq ,face (get-text-property ,pos 'face)))))
 
 (ert-deftest julia--test-indent-if ()
   "We should indent inside if bodies."
@@ -349,6 +359,11 @@ using Foo: bar ,
     baz,
     quux
 notpartofit"))
+
+(ert-deftest julia--test-symbol-font-locking-at-bol ()
+  "Symbols get font-locked at beginning or line."
+  (julia--should-font-lock
+   ":a in keys(Dict(:a=>1))" 1 'julia-quoted-symbol-face))
 
 (defun julia--run-tests ()
   (interactive)
