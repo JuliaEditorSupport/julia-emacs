@@ -55,6 +55,16 @@
                       ,to)))))
 
 
+(defmacro julia--should-complete (from to)
+  "Assert that when the point is at the end of FROM, `completion-at-point'
+produces the text TO in `julia-mode'."
+  `(with-temp-buffer
+     (julia-mode)
+     (insert ,from)
+     (completion-at-point)
+     (should (equal (buffer-substring-no-properties (point-min) (point-max))
+                    ,to))))
+
 (ert-deftest julia--test-indent-if ()
   "We should indent inside if bodies."
   (julia--should-indent
@@ -349,6 +359,14 @@ using Foo: bar ,
     baz,
     quux
 notpartofit"))
+
+(ert-deftest julia--test-complete-latex ()
+  "We should complete after '\\'."
+  (julia--should-complete
+   "
+\\ster"
+   "
+\\sterling"))
 
 (defun julia--run-tests ()
   (interactive)
