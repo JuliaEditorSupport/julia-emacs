@@ -646,6 +646,24 @@ meaning always increase indent on TAB and decrease on S-TAB."
     ;; ("Data" "^\\(.+\\)\\s-*<-[ \t\n]*\\(read\\|.*data\.frame\\).*(" 1)))
     ))
 
+;;; Completion
+
+;; Currently only completes latex symbols in `julia-latexsubs'
+(defun julia-completion-at-point-function ()
+  (let ((bnds (bounds-of-thing-at-point 'symbol)))
+    (when bnds
+      (cond
+       ;; complete latex symbol when current symbol is prefixed
+       ;; by '\'
+       ((eq (char-before (car bnds)) ?\\)
+        (list (1- (car bnds)) (cdr bnds) julia-latexsubs
+              :annotation-function
+              #'(lambda (arg)
+                  (gethash arg julia-latexsubs ""))))
+       ;; FIXME: other cases
+       ))))
+
+
 ;;;###autoload
 (define-derived-mode julia-mode julia-mode-prog-mode "Julia"
   "Major mode for editing julia code."
@@ -671,7 +689,10 @@ meaning always increase indent on TAB and decrease on S-TAB."
   (set (make-local-variable 'indent-line-function) 'julia-indent-line)
   (setq indent-tabs-mode nil)
   (setq imenu-generic-expression julia-imenu-generic-expression)
-  (imenu-add-to-menubar "Imenu"))
+  (imenu-add-to-menubar "Imenu")
+
+  ;; completion-at-point
+  (add-to-list 'completion-at-point-functions #'julia-completion-at-point-function))
 
 (defun julia-manual-deindent ()
   "Deindent by `julia-indent-offset' regardless of current
