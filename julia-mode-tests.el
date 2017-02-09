@@ -360,6 +360,20 @@ using Foo: bar ,
     quux
 notpartofit"))
 
+(ert-deftest julia--test-indent-anonymous-function ()
+  "indentation for function(args...)"
+  (julia--should-indent
+   "function f(x)
+function(y)
+x+y
+end
+end"
+   "function f(x)
+    function(y)
+        x+y
+    end
+end"))
+
 (ert-deftest julia--test-symbol-font-locking-at-bol ()
   "Symbols get font-locked at beginning or line."
   (julia--should-font-lock

@@ -405,6 +405,7 @@ a keyword if used as a field name, X.word, or quoted, :word."
   (and (or (= (point) 1)
 	   (and (not (equal (char-before (point)) ?.))
 		(not (equal (char-before (point)) ?:))))
+       (not (looking-at "("))           ; handle "function(" when on (
        (member (current-word t) kw-list)
        ;; 'end' is not a keyword when used for indexing, e.g. foo[end-2]
        (or (not (equal (current-word t) "end"))
