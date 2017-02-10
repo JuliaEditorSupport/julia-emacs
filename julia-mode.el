@@ -240,7 +240,9 @@ This function provides equivalent functionality, but makes no efforts to optimis
       (not (any "="))))
 
 (defconst julia-type-regex
-  (rx symbol-start (or "immutable" "type" "abstract") (1+ space) (group (1+ (or word (syntax symbol))))))
+  (rx symbol-start (or "immutable" "type" ;; remove after 0.6
+                       "abstract type" "primitive type" "struct" "mutable struct")
+      (1+ space) (group (1+ (or word (syntax symbol))))))
 
 (defconst julia-type-annotation-regex
   (rx "::" (0+ space) (group (1+ (or word (syntax symbol))))))
@@ -257,10 +259,12 @@ This function provides equivalent functionality, but makes no efforts to optimis
 (defconst julia-keyword-regex
   (julia--regexp-opt
    '("if" "else" "elseif" "while" "for" "begin" "end" "quote"
-     "try" "catch" "return" "local" "abstract" "function" "macro" "ccall"
-     "finally" "typealias" "break" "continue" "type" "global"
-     "module" "using" "import" "export" "const" "let" "bitstype" "do" "in"
-     "baremodule" "importall" "immutable")
+     "try" "catch" "return" "local" "function" "macro" "ccall"
+     "finally" "break" "continue" "global"
+     "module" "using" "import" "export" "const" "let" "do" "in"
+     "baremodule" "importall"
+     "immutable" "type" "bitstype" "abstract" "typealias" ;; remove after 0.6
+     "abstract type" "primitive type" "struct" "mutable struct")
    'symbols))
 
 (defconst julia-builtin-regex
@@ -322,8 +326,10 @@ This function provides equivalent functionality, but makes no efforts to optimis
    ))
 
 (defconst julia-block-start-keywords
-  (list "if" "while" "for" "begin" "try" "function" "type" "let" "macro"
-        "quote" "do" "immutable" "module"))
+  (list "if" "while" "for" "begin" "try" "function" "let" "macro"
+        "quote" "do" "module"
+        "immutable" "type" ;; remove after 0.6
+        "abstract type" "primitive type" "struct" "mutable struct"))
 
 ;; For keywords that begin a block without additional indentation
 (defconst julia-block-start-keywords-no-indent
