@@ -360,6 +360,41 @@ using Foo: bar ,
     quux
 notpartofit"))
 
+(ert-deftest julia--test-indent-anonymous-function ()
+  "indentation for function(args...)"
+  (julia--should-indent
+   "function f(x)
+function(y)
+x+y
+end
+end"
+   "function f(x)
+    function(y)
+        x+y
+    end
+end"))
+
+(ert-deftest julia--test-indent-keyword-paren ()
+  "indentation for ( following keywords"
+  "if( a>0 )
+end
+    
+    function( i=1:2 )
+        for( j=1:2 )
+            for( k=1:2 )
+            end
+            end
+        end"
+  "if( a>0 )
+end
+
+function( i=1:2 )
+    for( j=1:2 )
+        for( k=1:2 )
+        end
+    end
+end")
+
 (ert-deftest julia--test-symbol-font-locking-at-bol ()
   "Symbols get font-locked at beginning or line."
   (julia--should-font-lock
