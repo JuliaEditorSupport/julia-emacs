@@ -400,6 +400,11 @@ end")
   (julia--should-font-lock
    ":a in keys(Dict(:a=>1))" 1 'julia-quoted-symbol-face))
 
+(ert-deftest julia--test-symbol-font-locking-after-backslash ()
+  "Even with a \ before the (, it is recognized as matching )."
+  (let ((string "function \\(a, b)"))
+    (julia--should-font-lock string (1- (length string)) nil)))
+
 (defun julia--run-tests ()
   (interactive)
   (if (featurep 'ert)
