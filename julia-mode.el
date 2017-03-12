@@ -437,7 +437,7 @@ symbol, gives up when this is not true."
         (module nil))                   ; found "Module:"
     (save-excursion
       (beginning-of-line)
-      (while (and (not done) (< 0 (point)))
+      (while (and (not done) (< (point-min) (point)))
         (julia-safe-backward-sexp)
         (cond
          ((looking-at (rx (or "import" "export" "using")))

@@ -342,20 +342,16 @@ end"))
 (ert-deftest julia--test-indent-import-export-using ()
   "Toplevel using, export, and import."
   (julia--should-indent
-   "
-export bar, baz,
+   "export bar, baz,
 quux"
-   "
-export bar, baz,
+   "export bar, baz,
     quux")
   (julia--should-indent
-   "
-using Foo: bar ,
+   "using Foo: bar ,
 baz,
 quux
 notpartofit"
-   "
-using Foo: bar ,
+   "using Foo: bar ,
     baz,
     quux
 notpartofit"))
