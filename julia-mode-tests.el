@@ -374,6 +374,18 @@ end"
     end
 end"))
 
+(ert-deftest julia--test-backslash-indent ()
+  "indentation for function(args...)"
+  (julia--should-indent
+   "(\)
+   1
+   (:\)
+       1"
+   "(\)
+1
+(:\)
+1"))
+
 (ert-deftest julia--test-indent-keyword-paren ()
   "indentation for ( following keywords"
   "if( a>0 )
