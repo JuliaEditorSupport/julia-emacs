@@ -1,6 +1,6 @@
 # Emacs major mode for the julia programming language
 
-[![Build Status](https://travis-ci.org/JuliaLang/julia-emacs.svg?branch=master)](https://travis-ci.org/JuliaLang/julia-emacs)
+[![Build Status](https://travis-ci.org/JuliaEditorSupport/julia-emacs.svg?branch=master)](https://travis-ci.org/JuliaEditorSupport/julia-emacs)
 
 # Install
 
