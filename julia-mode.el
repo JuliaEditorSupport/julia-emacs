@@ -229,9 +229,7 @@ This function provides equivalent functionality, but makes no efforts to optimis
   (rx line-start (* (or space "@inline" "@noinline")) symbol-start
       (* (seq (1+ (or word (syntax symbol))) ".")) ; module name
       (group (1+ (or word (syntax symbol))))
-      (* space)
       (? "{" (* (not (any "}"))) "}")
-      (* space)
       "(" (* (or
               (seq "(" (* (not (any "(" ")"))) ")")
               (not (any "(" ")"))))
