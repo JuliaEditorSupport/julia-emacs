@@ -246,12 +246,12 @@ qux"))
   (julia--should-indent
      "
 if foo
-        
+
 bar
 end"
      "
 if foo
-    
+
     bar
 end"))
 
@@ -390,7 +390,7 @@ end"))
   "indentation for ( following keywords"
   "if( a>0 )
 end
-    
+
     function( i=1:2 )
         for( j=1:2 )
             for( k=1:2 )
@@ -416,6 +416,26 @@ end")
   "Even with a \ before the (, it is recognized as matching )."
   (let ((string "function \\(a, b)"))
     (julia--should-font-lock string (1- (length string)) nil)))
+
+(ert-deftest julia--test-function-assignment-font-locking ()
+  (julia--should-font-lock
+   "f(x) = 1" 1 'font-lock-function-name-face)
+  (julia--should-font-lock
+   "Base.f(x) = 1" 6 'font-lock-function-name-face)
+  (julia--should-font-lock
+   "f(x) where T = 1" 1 'font-lock-function-name-face)
+  (julia--should-font-lock
+   "f(x) where{T} = 1" 1 'font-lock-function-name-face))
+
+(ert-deftest julia--test-where-keyword-font-locking ()
+  (julia--should-font-lock
+   "f(x) where T = 1" 6 'font-lock-keyword-face)
+  (dolist (pos '(22 30))
+    (julia--should-font-lock
+     "function f(::T, ::Z) where T where Z
+          1
+      end"
+     pos 'font-lock-keyword-face)))
 
 (defun julia--run-tests ()
   (interactive)

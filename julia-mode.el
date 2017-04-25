@@ -237,6 +237,7 @@ This function provides equivalent functionality, but makes no efforts to optimis
               (not (any "(" ")"))))
       ")"
       (* space)
+      (* (seq "where" (or "{" (+ space)) (+ (not (any "=")))))
       "="
       (not (any "="))))
 
@@ -261,7 +262,7 @@ This function provides equivalent functionality, but makes no efforts to optimis
   (julia--regexp-opt
    '("if" "else" "elseif" "while" "for" "begin" "end" "quote"
      "try" "catch" "return" "local" "function" "macro" "ccall"
-     "finally" "break" "continue" "global"
+     "finally" "break" "continue" "global" "where"
      "module" "using" "import" "export" "const" "let" "do" "in"
      "baremodule" "importall"
      "immutable" "type" "bitstype" "abstract" "typealias" ;; remove after 0.6
