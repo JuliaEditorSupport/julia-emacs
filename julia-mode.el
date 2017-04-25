@@ -116,6 +116,7 @@ This function provides equivalent functionality, but makes no efforts to optimis
     (modify-syntax-entry ?< "." table)
     (modify-syntax-entry ?> "." table)
     (modify-syntax-entry ?% "." table)
+    (modify-syntax-entry ?\\ "." table)
     table)
   "Syntax table for `julia-mode'.")
 

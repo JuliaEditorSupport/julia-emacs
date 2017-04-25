@@ -374,6 +374,18 @@ end"
     end
 end"))
 
+(ert-deftest julia--test-backslash-indent ()
+  "indentation for function(args...)"
+  (julia--should-indent
+   "(\)
+   1
+   (:\)
+       1"
+   "(\)
+1
+(:\)
+1"))
+
 (ert-deftest julia--test-indent-keyword-paren ()
   "indentation for ( following keywords"
   "if( a>0 )
@@ -399,6 +411,11 @@ end")
   "Symbols get font-locked at beginning or line."
   (julia--should-font-lock
    ":a in keys(Dict(:a=>1))" 1 'julia-quoted-symbol-face))
+
+(ert-deftest julia--test-symbol-font-locking-after-backslash ()
+  "Even with a \ before the (, it is recognized as matching )."
+  (let ((string "function \\(a, b)"))
+    (julia--should-font-lock string (1- (length string)) nil)))
 
 (defun julia--run-tests ()
   (interactive)
