@@ -229,14 +229,13 @@ This function provides equivalent functionality, but makes no efforts to optimis
   (rx line-start (* (or space "@inline" "@noinline")) symbol-start
       (* (seq (1+ (or word (syntax symbol))) ".")) ; module name
       (group (1+ (or word (syntax symbol))))
-      (* space)
       (? "{" (* (not (any "}"))) "}")
-      (* space)
       "(" (* (or
               (seq "(" (* (not (any "(" ")"))) ")")
               (not (any "(" ")"))))
       ")"
       (* space)
+      (* (seq "where" (or "{" (+ space)) (+ (not (any "=")))))
       "="
       (not (any "="))))
 
@@ -261,7 +260,7 @@ This function provides equivalent functionality, but makes no efforts to optimis
   (julia--regexp-opt
    '("if" "else" "elseif" "while" "for" "begin" "end" "quote"
      "try" "catch" "return" "local" "function" "macro" "ccall"
-     "finally" "break" "continue" "global"
+     "finally" "break" "continue" "global" "where"
      "module" "using" "import" "export" "const" "let" "do" "in"
      "baremodule" "importall"
      "immutable" "type" "bitstype" "abstract" "typealias" ;; remove after 0.6
