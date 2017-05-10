@@ -10,3 +10,11 @@ Put the following code in your `.emacs`, `site-load.el`, or other relevant file
 (add-to-list 'load-path "path-to-julia-mode")
 (require 'julia-mode)
 ```
+
+If you want fully functioning Julia REPL you need "screen" and
+
+```elisp
+(require 'julia-repl)
+```
+
+You can send current line or selection to REPL with C-c C-r
