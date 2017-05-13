@@ -425,7 +425,9 @@ end")
   (julia--should-font-lock
    "f(x) where T = 1" 1 'font-lock-function-name-face)
   (julia--should-font-lock
-   "f(x) where{T} = 1" 1 'font-lock-function-name-face))
+   "f(x) where{T} = 1" 1 'font-lock-function-name-face)
+  (dolist (def '("f(x)::T = 1" "f(x) :: T = 1" "f(x::X)::T where X = x"))
+    (julia--should-font-lock def 1 'font-lock-function-name-face)))
 
 (ert-deftest julia--test-where-keyword-font-locking ()
   (julia--should-font-lock
