@@ -235,6 +235,8 @@ This function provides equivalent functionality, but makes no efforts to optimis
               (not (any "(" ")"))))
       ")"
       (* space)
+      (? "::" (* space) (1+ (not (any space))))
+      (* space)
       (* (seq "where" (or "{" (+ space)) (+ (not (any "=")))))
       "="
       (not (any "="))))
