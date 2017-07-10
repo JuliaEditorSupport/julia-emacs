@@ -1446,6 +1446,7 @@ strings."
 (puthash "\\hermitconjmatrix" "⊹" julia-latexsubs)
 (puthash "\\intercal" "⊺" julia-latexsubs)
 (puthash "\\veebar" "⊻" julia-latexsubs)
+(puthash "\\xor" "⊻" julia-latexsubs)
 (puthash "\\barwedge" "⊼" julia-latexsubs)
 (puthash "\\barvee" "⊽" julia-latexsubs)
 (puthash "\\rightanglearc" "⊾" julia-latexsubs)
