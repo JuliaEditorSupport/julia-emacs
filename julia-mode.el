@@ -3222,7 +3222,7 @@ strings."
   :type 'string
   :group 'julia)
 
-(defcustom julia-arguments '()
+(defcustom julia-arguments '("-i" "--color=yes")
   "Commandline arguments to pass to `julia-program'."
   :type '(repeat (string :tag "argument"))
   :group 'julia)
