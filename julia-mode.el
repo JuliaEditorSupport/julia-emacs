@@ -3222,9 +3222,9 @@ strings."
   :type 'string
   :group 'julia)
 
-(defcustom julia-arguments '()
+(defcustom julia-arguments '("-i" "--color=yes")
   "Commandline arguments to pass to `julia-program'."
-  :type 'string
+  :type '(repeat (string :tag "argument"))
   :group 'julia)
 
 (defvar julia-prompt-regexp "^\\w*> "
@@ -3244,7 +3244,8 @@ strings."
     (let ((julia-program julia-program)
           (buffer (get-buffer-create "*Julia*")))
       (when (not (comint-check-proc "*Julia*"))
-            (apply #'make-comint-in-buffer "Julia" "*Julia*" julia-program julia-arguments))
+        (apply #'make-comint-in-buffer "Julia" "*Julia*"
+               julia-program nil julia-arguments))
       (pop-to-buffer-same-window "*Julia*")
       (inferior-julia-mode)))
 
