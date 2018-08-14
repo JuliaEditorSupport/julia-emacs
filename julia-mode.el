@@ -3214,6 +3214,28 @@ strings."
 (puthash "\\mtteight" "𝟾" julia-latexsubs)
 (puthash "\\mttnine" "𝟿" julia-latexsubs)
 
+;; Math insertion in julia. Use it with
+;; (add-hook 'julia-mode-hook 'julia-math-mode)
+;; (add-hook 'inferior-julia-mode-hook 'julia-math-mode)
+
+(when (require 'latex nil t)
+  (defun julia-math-insert (s)
+    "Inserts math symbol given by `s'"
+    (when s
+      (let ((sym (gethash (concat "\\" s) julia-latexsubs)))
+        (when sym
+          (insert sym)))))
+
+  (define-minor-mode julia-math-mode
+    "A minor mode with easy access to TeX math commands. The
+command is only entered if it is supported in Julia. The
+following commands are defined:
+
+\\{LaTeX-math-mode-map}"
+    nil nil (list (cons (LaTeX-math-abbrev-prefix) LaTeX-math-keymap))
+    (if julia-math-mode
+        (set (make-local-variable 'LaTeX-math-insert-function) 'julia-math-insert))))
+
 ;; Code for `inferior-julia-mode'
 (require 'comint)
 
