@@ -435,6 +435,13 @@ end")
       end"
      pos 'font-lock-keyword-face)))
 
+(ert-deftest julia--test-escaped-strings-dont-terminate-string ()
+  "Symbols get font-locked at beginning or line."
+  (let ((string "\"\\\"\"; function"))
+    (dolist (pos '(1 2 3 4))
+      (julia--should-font-lock string pos font-lock-string-face))
+    (julia--should-font-lock string (length string) font-lock-keyword-face)))
+
 (defun julia--run-tests ()
   (interactive)
   (if (featurep 'ert)
