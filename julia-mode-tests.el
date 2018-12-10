@@ -65,6 +65,15 @@
          (font-lock-fontify-buffer)))
      (should (eq ,face (get-text-property ,pos 'face)))))
 
+(defmacro julia--should-insert-latex (initial result)
+  "Assert that initial text is replaced by latex symbol."
+  `(with-temp-buffer
+     (julia-mode)
+     (insert ,initial)
+     (julia-latexsub-or-indent nil)
+     (should (equal (buffer-substring-no-properties (point-min) (point-max))
+                    ,result))))
+
 (ert-deftest julia--test-indent-if ()
   "We should indent inside if bodies."
   (julia--should-indent
@@ -441,6 +450,10 @@ end")
     (dolist (pos '(1 2 3 4))
       (julia--should-font-lock string pos font-lock-string-face))
     (julia--should-font-lock string (length string) font-lock-keyword-face)))
+
+(ert-deftest julia--test-latex-substitution ()
+  "Latex is replaced by symbols."
+  (julia--should-insert-latex "\\O" "Ø"))
 
 (defun julia--run-tests ()
   (interactive)
