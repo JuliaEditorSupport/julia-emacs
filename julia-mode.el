@@ -34,11 +34,7 @@
 ;; WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 ;;; Code:
-
-;; We can't use cl-lib whilst supporting Emacs 23 users who don't use
-;; ELPA.
-(with-no-warnings
-  (require 'cl)) ;; incf, decf, plusp
+(require 'julia-compat)
 
 (defvar julia-mode-hook nil)
 
@@ -65,24 +61,6 @@
 
 ;;;###autoload
 (add-to-list 'auto-mode-alist '("\\.jl\\'" . julia-mode))
-
-;; define ignore-errors macro if it isn't present
-;; (necessary for emacs 22 compatibility)
-(when (not (fboundp 'ignore-errors))
-  (defmacro ignore-errors (body) `(condition-case nil ,body (error nil))))
-
-(defun julia--regexp-opt (strings &optional paren)
-  "Emacs 23 provides `regexp-opt', but it does not support PAREN taking the value 'symbols.
-This function provides equivalent functionality, but makes no efforts to optimise the regexp."
-  (cond
-   ((>= emacs-major-version 24)
-    (regexp-opt strings paren))
-   ((not (eq paren 'symbols))
-    (regexp-opt strings paren))
-   ((null strings)
-    "")
-   ('t
-    (rx-to-string `(seq symbol-start (or ,@strings) symbol-end)))))
 
 (defvar julia-mode-syntax-table
   (let ((table (make-syntax-table)))
@@ -397,14 +375,14 @@ As a result, it is true inside \"foo\", `foo` and 'f'."
         (unless (or (julia-in-string) (julia-in-comment))
 
           (when (looking-at (rx "["))
-            (incf open-count))
+            (cl-incf open-count))
           (when (looking-at (rx "]"))
-            (decf open-count)))
+            (cl-decf open-count)))
 
         (forward-char 1)))
 
     ;; If we've opened more than we've closed, we're inside brackets.
-    (plusp open-count)))
+    (cl-plusp open-count)))
 
 (defun julia-at-keyword (kw-list)
   "Return the word at point if it matches any keyword in KW-LIST.
@@ -543,7 +521,7 @@ the (possibly narrowed) buffer, so there is nowhere else to go."
          ((and (= 0 this-move)
                (or (looking-at-p "^\\s-*\\(?:#.*\\)*$")
                    (julia-in-comment)))
-          (incf moved))
+          (cl-incf moved))
          ;; success
          ((= 0 this-move)
           (throw 'result (1+ moved)))

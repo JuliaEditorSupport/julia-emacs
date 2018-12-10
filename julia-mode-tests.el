@@ -36,11 +36,6 @@
 
 ;;; Code:
 
-;; We can't use cl-lib whilst supporting Emacs 23 users who don't use
-;; ELPA.
-(with-no-warnings
-  (require 'cl)) ;; incf, decf, plusp
-
 (require 'julia-mode)
 (require 'ert)
 
