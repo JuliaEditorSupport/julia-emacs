@@ -1,4 +1,4 @@
-;;; julia-mode.el --- Major mode for editing Julia source code
+;;; julia-mode.el --- Major mode for editing Julia source code -*- lexical-binding: t; -*-
 
 ;; Copyright (C) 2009-2014 Julia contributors
 ;; URL: https://github.com/JuliaLang/julia
@@ -3264,7 +3264,7 @@ following commands are defined:
     "Run an inferior instance of `julia' inside Emacs."
     (interactive)
     (let ((julia-program julia-program)
-          (buffer (get-buffer-create "*Julia*")))
+          (_buffer (get-buffer-create "*Julia*")))
       (when (not (comint-check-proc "*Julia*"))
         (apply #'make-comint-in-buffer "Julia" "*Julia*"
                julia-program nil julia-arguments))
