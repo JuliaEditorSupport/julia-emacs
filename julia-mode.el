@@ -373,16 +373,16 @@ Based on `python-syntax-stringify'."
       (2 ".") ; Don't highlight anything between.
       (3 "\""))))) ; Treat the last " in """ as a string delimiter.
 
-(defun julia-in-comment ()
-  "Return non-nil if point is inside a comment.
+(defun julia-in-comment (&optional syntax-ppss)
+  "Return non-nil if point is inside a comment using SYNTAX-PPSS.
 Handles both single-line and multi-line comments."
-  (nth 4 (syntax-ppss)))
+  (nth 4 (or syntax-ppss (syntax-ppss))))
 
-(defun julia-in-string ()
-  "Return non-nil if point is inside a string.
+(defun julia-in-string (&optional syntax-ppss)
+  "Return non-nil if point is inside a string using SYNTAX-PPSS.
 Note this is Emacs' notion of what is highlighted as a string.
 As a result, it is true inside \"foo\", `foo` and 'f'."
-  (nth 3 (syntax-ppss)))
+  (nth 3 (or syntax-ppss (syntax-ppss))))
 
 (defun julia-in-brackets ()
   "Return non-nil if point is inside square brackets."
@@ -637,6 +637,127 @@ meaning always increase indent on TAB and decrease on S-TAB."
       'prog-mode
     'fundamental-mode))
 
+
+;;; Navigation
+;; based off python.el
+(defconst julia-beginning-of-defun-regex
+  (eval-when-compile (concat julia-function-regex "\\|"
+                             julia-function-assignment-regex "\\|"
+                             "\\_<macro\\_>"))
+  "Regex matching beginning of Julia function or macro.")
+
+(defun julia-syntax-context-type (&optional syntax-ppss)
+  "Return the context type using SYNTAX-PPSS.
+TYPE can be `comment', `string' or `paren'."
+  (let ((ppss (or syntax-ppss (syntax-ppss))))
+    (cond
+     ((nth 8 ppss) (if (nth 4 ppss) 'comment 'string))
+     ((nth 1 ppss) 'paren))))
+
+(defsubst julia-syntax-comment-or-string-p (&optional syntax-ppss)
+  "Return non-nil if SYNTAX-PPSS is inside string or comment."
+  (nth 8 (or syntax-ppss (syntax-ppss))))
+
+(defun julia-looking-at-beginning-of-defun (&optional syntax-ppss)
+  "Check if point is at `beginning-of-defun' using SYNTAX-PPSS."
+  (and (not (julia-syntax-comment-or-string-p (or syntax-ppss (syntax-ppss))))
+       (save-excursion
+         (beginning-of-line 1)
+         (looking-at julia-beginning-of-defun-regex))))
+
+(defun julia--beginning-of-defun (&optional arg)
+  "Internal implementation of `julia-beginning-of-defun'.
+With positive ARG search backwards, else search forwards."
+  (when (or (null arg) (= arg 0)) (setq arg 1))
+  (let* ((re-search-fn (if (> arg 0)
+                           #'re-search-backward
+                         #'re-search-forward))
+         (line-beg-pos (line-beginning-position))
+         (line-content-start (+ line-beg-pos (current-indentation)))
+         (pos (point-marker))
+         (beg-indentation
+          (and (> arg 0)
+               (save-excursion
+                 (while (and (not (julia-looking-at-beginning-of-defun))
+                             ;; f(x) = ... function bodies may span multiple lines
+                             (or (and (julia-indent-hanging)
+                                      (forward-line -1))
+                                 ;; inside dangling parameter list
+                                 (and (eq 'paren (julia-syntax-context-type))
+                                      (backward-up-list))
+                                 (julia-last-open-block (point-min)))))
+                 (or (and (julia-looking-at-beginning-of-defun)
+                          (+ (current-indentation) julia-indent-offset))
+                     0))))
+         (found
+          (progn
+            (when (and (< arg 0)
+                       (julia-looking-at-beginning-of-defun))
+              (end-of-line 1))
+            (while (and (funcall re-search-fn
+                                 julia-beginning-of-defun-regex nil t)
+                        (or (julia-syntax-comment-or-string-p)
+                            ;; handle nested defuns when moving backwards
+                            ;; by checking matching indentation
+                            (and (> arg 0)
+                                 (not (= (current-indentation) 0))
+                                 (>= (current-indentation) beg-indentation)))))
+            (and (julia-looking-at-beginning-of-defun)
+                 (or (not (= (line-number-at-pos pos)
+                             (line-number-at-pos)))
+                     (and (>= (point) line-beg-pos)
+                          (<= (point) line-content-start)
+                          (> pos line-content-start)))))))
+    (if found
+        (or (beginning-of-line 1) (point))
+      (and (goto-char pos) nil))))
+
+(defun julia-beginning-of-defun (&optional arg)
+  "Move point to `beginning-of-defun'.
+With positive ARG search backwards else search forward.
+ARG nil or 0 defaults to 1.  When searching backwards,
+nested defuns are handled depending on current point position.
+Return non-nil (point) if point moved to `beginning-of-defun'."
+  (when (or (null arg) (= arg 0)) (setq arg 1))
+  (let ((found))
+    (while (and (not (= arg 0))
+                (let ((keep-searching-p
+                       (julia--beginning-of-defun arg)))
+                  (when (and keep-searching-p (null found))
+                    (setq found t))
+                  keep-searching-p))
+      (setq arg (if (> arg 0) (1- arg) (1+ arg))))
+    found))
+
+(defun julia-end-of-defun (&optional arg)
+  "Move point to the end of the current function.
+Return nil if point is not in a function, otherwise point."
+  (interactive)
+  (let ((beg-defun-indent)
+        (beg-pos (point)))
+    (when (or (julia-looking-at-beginning-of-defun)
+              (julia-beginning-of-defun 1)
+              (julia-beginning-of-defun -1))
+      (beginning-of-line)
+      (if (looking-at-p julia-function-assignment-regex)
+          ;; f(x) = ...
+          (progn
+            ;; skip any dangling lines
+            (while (and (forward-line)
+                        (not (eobp))
+                        (or (julia-indent-hanging)
+                            ;; dangling closing paren
+                            (and (eq 'paren (julia-syntax-context-type))
+                                 (search-forward ")"))))))
+        ;; otherwise skip forward to matching indentation (not in string/comment)
+        (setq beg-defun-indent (current-indentation))
+        (while (and (not (eobp))
+                    (forward-line 1)
+                    (or (julia-syntax-comment-or-string-p)
+                        (> (current-indentation) beg-defun-indent)))))
+      (end-of-line)
+      (point))))
+
 ;;; IMENU
 (defvar julia-imenu-generic-expression
   ;; don't use syntax classes, screws egrep
@@ -680,6 +801,8 @@ meaning always increase indent on TAB and decrease on S-TAB."
     (set (make-local-variable 'syntax-propertize-function)
          julia-syntax-propertize-function))
   (set (make-local-variable 'indent-line-function) 'julia-indent-line)
+  (set (make-local-variable 'beginning-of-defun-function) #'julia-beginning-of-defun)
+  (set (make-local-variable 'end-of-defun-function) #'julia-end-of-defun)
   (setq indent-tabs-mode nil)
   (setq imenu-generic-expression julia-imenu-generic-expression)
   (imenu-add-to-menubar "Imenu"))

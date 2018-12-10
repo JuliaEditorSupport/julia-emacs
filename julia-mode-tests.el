@@ -65,14 +65,37 @@
          (font-lock-fontify-buffer)))
      (should (eq ,face (get-text-property ,pos 'face)))))
 
+(defmacro julia--should-move-point (text fun from to &optional end arg)
+  "With TEXT in `julia-mode', after calling FUN, the point should move FROM\
+to TO.  If FROM is a string, move the point to matching string before calling
+function FUN.  If TO is a string, match resulting point to point a beginning of
+matching line or end of match if END is non-nil.  Optional ARG is passed to FUN."
+  (declare (indent defun))
+  `(with-temp-buffer
+     (julia-mode)
+     (insert ,text)
+     (indent-region (point-min) (point-max))
+     (goto-char (point-min))
+     (if (stringp ,from)
+         (re-search-forward ,from)
+       (goto-char ,from))
+     (funcall ,fun ,arg)
+     (should (eq (point) (if (stringp ,to)
+                             (progn (goto-char (point-min))
+                                    (re-search-forward ,to)
+                                    (if ,end (goto-char (match-end 0))
+                                      (goto-char (match-beginning 0))
+                                      (point-at-bol)))
+                           ,to)))))
+
 (ert-deftest julia--test-indent-if ()
   "We should indent inside if bodies."
   (julia--should-indent
-     "
+   "
 if foo
 bar
 end"
-     "
+   "
 if foo
     bar
 end"))
@@ -80,13 +103,13 @@ end"))
 (ert-deftest julia--test-indent-else ()
   "We should indent inside else bodies."
   (julia--should-indent
-     "
+   "
 if foo
     bar
 else
 baz
 end"
-     "
+   "
 if foo
     bar
 else
@@ -96,23 +119,23 @@ end"))
 (ert-deftest julia--test-indent-toplevel ()
   "We should not indent toplevel expressions. "
   (julia--should-indent
-     "
+   "
 foo()
 bar()"
-     "
+   "
 foo()
 bar()"))
 
 (ert-deftest julia--test-indent-nested-if ()
   "We should indent for each level of indentation."
   (julia--should-indent
-     "
+   "
 if foo
     if bar
 bar
     end
 end"
-     "
+   "
 if foo
     if bar
         bar
@@ -151,11 +174,11 @@ end"))
 (ert-deftest julia--test-indent-function ()
   "We should indent function bodies."
   (julia--should-indent
-     "
+   "
 function foo()
 bar
 end"
-     "
+   "
 function foo()
     bar
 end"))
@@ -163,11 +186,11 @@ end"))
 (ert-deftest julia--test-indent-begin ()
   "We should indent after a begin keyword."
   (julia--should-indent
-     "
+   "
 @async begin
 bar
 end"
-     "
+   "
 @async begin
     bar
 end"))
@@ -175,10 +198,10 @@ end"))
 (ert-deftest julia--test-indent-paren ()
   "We should indent to line up with the text after an open paren."
   (julia--should-indent
-     "
+   "
 foobar(bar,
 baz)"
-     "
+   "
 foobar(bar,
        baz)"))
 
@@ -186,31 +209,31 @@ foobar(bar,
   "We should indent to line up with the text after an open
 paren, even if there are additional spaces."
   (julia--should-indent
-     "
+   "
 foobar( bar,
 baz )"
-     "
+   "
 foobar( bar,
         baz )"))
 
 (ert-deftest julia--test-indent-paren-newline ()
   "python-mode-like indentation."
   (julia--should-indent
-     "
+   "
 foobar(
 bar,
 baz)"
-     "
+   "
 foobar(
     bar,
     baz)")
   (julia--should-indent
-     "
+   "
 foobar(
 bar,
 baz
 )"
-     "
+   "
 foobar(
     bar,
     baz
@@ -219,10 +242,10 @@ foobar(
 (ert-deftest julia--test-indent-equals ()
   "We should increase indent on a trailing =."
   (julia--should-indent
-     "
+   "
 foo() =
 bar"
-     "
+   "
 foo() =
     bar"))
 
@@ -244,12 +267,12 @@ qux"))
 (ert-deftest julia--test-indent-ignores-blank-lines ()
   "Blank lines should not affect indentation of non-blank lines."
   (julia--should-indent
-     "
+   "
 if foo
 
 bar
 end"
-     "
+   "
 if foo
 
     bar
@@ -258,11 +281,11 @@ end"))
 (ert-deftest julia--test-indent-comment-equal ()
   "`=` at the end of comment should not increase indent level."
   (julia--should-indent
-     "
+   "
 # a =
 # b =
 c"
-     "
+   "
 # a =
 # b =
 c"))
@@ -270,32 +293,32 @@ c"))
 (ert-deftest julia--test-indent-leading-paren ()
   "`(` at the beginning of a line should not affect indentation."
   (julia--should-indent
-     "
+   "
 \(1)"
-     "
+   "
 \(1)"))
 
 (ert-deftest julia--test-top-level-following-paren-indent ()
   "`At the top level, a previous line indented due to parens should not affect indentation."
   (julia--should-indent
-     "y1 = f(x,
+   "y1 = f(x,
        z)
 y2 = g(x)"
-     "y1 = f(x,
+   "y1 = f(x,
        z)
 y2 = g(x)"))
 
 (ert-deftest julia--test-indentation-of-multi-line-strings ()
   "Indentation should only affect the first line of a multi-line string."
-    (julia--should-indent
-     "   a = \"\"\"
+  (julia--should-indent
+   "   a = \"\"\"
     description
 begin
     foo
 bar
 end
 \"\"\""
-     "a = \"\"\"
+   "a = \"\"\"
     description
 begin
     foo
@@ -441,6 +464,136 @@ end")
     (dolist (pos '(1 2 3 4))
       (julia--should-font-lock string pos font-lock-string-face))
     (julia--should-font-lock string (length string) font-lock-keyword-face)))
+
+;;; Movement
+(ert-deftest julia--test-beginning-of-defun-assn-1 ()
+  "Point moves to beginning of single-line assignment function."
+  (julia--should-move-point
+    "f() = \"a + b\"" 'beginning-of-defun "a \\+" 1))
+
+(ert-deftest julia--test-beginning-of-defun-assn-2 ()
+  "Point moves to beginning of multi-line assignment function."
+  (julia--should-move-point
+    "f(x)=
+x*
+x" 'beginning-of-defun "\\*\nx" 1))
+
+(ert-deftest julia--test-beginning-of-defun-assn-3 ()
+  "Point moves to beginning of multi-line assignment function adjoining
+another function."
+  (julia--should-move-point
+    "f( x 
+)::Int16 = x / 2
+f2(y)=
+y*y" 'beginning-of-defun "2" 1))
+
+(ert-deftest julia--test-beginning-of-defun-assn-4 ()
+  "Point moves to beginning of 2nd multi-line assignment function adjoining
+another function."
+  (julia--should-move-point
+    "f( x 
+)::Int16 = 
+x /
+2
+f2(y) =
+y*y" 'beginning-of-defun "\\*y" "f2"))
+
+(ert-deftest julia--test-beginning-of-defun-assn-5 ()
+  "Point moves to beginning of 1st multi-line assignment function adjoining
+another function with prefix arg."
+  (julia--should-move-point
+    "f( x 
+)::Int16 = 
+x /
+2
+f2(y) =
+y*y" 'beginning-of-defun "y\\*y" 1 nil 2))
+
+(ert-deftest julia--test-beginning-of-macro ()
+  "Point moves to beginning of macro."
+  (julia--should-move-point
+    "macro current_module()
+return VERSION >= v\"0.7-\" :(@__MODULE__) : :(current_module())))
+end" 'beginning-of-defun "@" 1))
+  
+(ert-deftest julia--test-beginning-of-defun-1 ()
+  "Point moves to beginning of defun in 'function's."
+  (julia--should-move-point
+    "function f(a, b)
+a + b
+end" 'beginning-of-defun "f(" 1))
+
+(ert-deftest julia--test-beginning-of-defun-nested-1 ()
+  "Point moves to beginning of nested function."
+  (julia--should-move-point
+    "function f(x)
+
+function fact(n)
+if n == 0
+return 1
+else
+return n * fact(n-1)
+end
+end
+
+return fact(x)
+end" 'beginning-of-defun "fact(n" "function fact"))
+
+(ert-deftest julia--test-beginning-of-defun-nested-2 ()
+  "Point moves to beginning of outermost function with prefix arg."
+  (julia--should-move-point
+    "function f(x)
+
+function fact(n)
+if n == 0
+return 1
+else
+return n * fact(n-1)
+end
+end
+
+return fact(x)
+end" 'beginning-of-defun "n \\*" 1 nil 2))
+
+(ert-deftest julia--test-beginning-of-defun-no-move ()
+  "Point shouldn't move if there is no previous function."
+  (julia--should-move-point
+    "1 + 1
+f(x) = x + 1" 'beginning-of-defun "\\+" 4))
+
+(ert-deftest julia--test-end-of-defun-assn-1 ()
+  "Point should move to end of assignment function."
+  (julia--should-move-point
+    "f(x)::Int8 = 
+x *x" 'end-of-defun "(" "*x" 'end))
+
+(ert-deftest julia--test-end-of-defun-nested-1 ()
+  "Point should move to end of inner function when called from inner."
+  (julia--should-move-point
+    "function f(x)
+function fact(n)
+if n == 0
+return 1
+else
+return n * fact(n-1)
+end
+end
+return fact(x)
+end" 'end-of-defun "n == 0" "end[ \n]+end\n" 'end))
+
+(ert-deftest julia--test-end-of-defun-nested-2 ()
+  "Point should move to end of outer function when called from inner with prefix."
+  (julia--should-move-point
+    "function f(x)
+function fact(n)
+if n == 0
+return 1
+else
+return n * fact(n-1)
+end
+end
+return fact(x)
+end" 'end-of-defun "n == 0" "return fact(x)[ \n]+end" 'end 2))
 
 (defun julia--run-tests ()
   (interactive)
