@@ -1,4 +1,4 @@
-;;; julia-mode-tests.el --- Tests for julia-mode.el
+;;; julia-mode-tests.el --- Tests for julia-mode.el -*- lexical-binding: t; -*-
 
 ;; Copyright (C) 2009-2014 Julia contributors
 ;; URL: https://github.com/JuliaLang/julia
@@ -64,6 +64,26 @@
        (with-no-warnings
          (font-lock-fontify-buffer)))
      (should (eq ,face (get-text-property ,pos 'face)))))
+
+(defmacro julia--with-inf (&rest body)
+  "Test BODY in inferior Julia shell.  Only applicable if Julia can be found."
+  (declare (indent defun))
+  `(progn
+     (catch 'skip
+       (let ((julia-program "juliap"))
+         (unless (executable-find julia-program)
+           ;; in new emacs, skip test, otherwise just throw a pass
+           (if (fboundp 'ert-skip)
+               (ert-skip "Julia not found.")
+             (throw 'skip t)))
+         (add-hook 'inferior-julia-mode-hook
+                   #'(lambda ()
+                       (while (not (comint-check-proc (current-buffer)))))
+                   nil 'local)
+         (inferior-julia)
+         (with-current-buffer (get-buffer inferior-julia-buffer-name)
+           ,@body
+           (kill-buffer (current-buffer)))))))
 
 (ert-deftest julia--test-indent-if ()
   "We should indent inside if bodies."
@@ -441,6 +461,20 @@ end")
     (dolist (pos '(1 2 3 4))
       (julia--should-font-lock string pos font-lock-string-face))
     (julia--should-font-lock string (length string) font-lock-keyword-face)))
+
+;;; Inferior process
+(ert-deftest julia--test-inf-mode ()
+  "Test inferior julia process."
+  (julia--with-inf
+    (should (eq major-mode 'inferior-julia-mode))))
+
+(ert-deftest julia--test-inf-latexsub ()
+  "Test inserting latexsubs in inferior process."
+  (julia--with-inf
+    (insert "\\O")
+    (julia-latexsub-or-indent nil)
+    (should (equal (comint-get-old-input-default) "Ø"))))
+
 
 (defun julia--run-tests ()
   (interactive)
