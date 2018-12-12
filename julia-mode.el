@@ -635,11 +635,6 @@ meaning always increase indent on TAB and decrease on S-TAB."
     (when (>= point-offset 0)
       (move-to-column (+ (current-indentation) point-offset)))))
 
-(defalias 'julia-mode-prog-mode
-  (if (fboundp 'prog-mode)
-      'prog-mode
-    'fundamental-mode))
-
 
 ;;; Navigation
 ;; based off python.el
@@ -781,7 +776,7 @@ Return nil if point is not in a function, otherwise point."
     ))
 
 ;;;###autoload
-(define-derived-mode julia-mode julia-mode-prog-mode "Julia"
+(define-derived-mode julia-mode prog-mode "Julia"
   "Major mode for editing julia code."
   (set-syntax-table julia-mode-syntax-table)
   (set (make-local-variable 'comment-start) "# ")
