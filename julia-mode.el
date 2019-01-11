@@ -363,14 +363,14 @@ Based on `python-syntax-stringify'."
         (put-text-property string-start-pos (1+ string-start-pos)
                            'syntax-table (string-to-syntax "|"))))))
 
-(unless (< emacs-major-version 24)
-  (defconst julia-syntax-propertize-function
+(defconst julia-syntax-propertize-function
+  (unless (< emacs-major-version 24)
     (syntax-propertize-rules
      ("\"\"\""
       (0 (ignore (julia-stringify-triple-quote))))
      (julia-char-regex
-      (1 "\"") ; Treat ' as a string delimiter.
-      (2 ".") ; Don't highlight anything between.
+      (1 "\"")                 ; Treat ' as a string delimiter.
+      (2 ".")                  ; Don't highlight anything between.
       (3 "\""))))) ; Treat the last " in """ as a string delimiter.
 
 (defun julia-in-comment (&optional syntax-ppss)
@@ -641,9 +641,9 @@ meaning always increase indent on TAB and decrease on S-TAB."
 ;;; Navigation
 ;; based off python.el
 (defconst julia-beginning-of-defun-regex
-  (eval-when-compile (concat julia-function-regex "\\|"
-                             julia-function-assignment-regex "\\|"
-                             "\\_<macro\\_>"))
+  (concat julia-function-regex "\\|"
+          julia-function-assignment-regex "\\|"
+          "\\_<macro\\_>")
   "Regex matching beginning of Julia function or macro.")
 
 (defun julia-syntax-context-type (&optional syntax-ppss)
@@ -791,12 +791,12 @@ Return nil if point is not in a function, otherwise point."
            (list
             `(,julia-char-regex
               (1 "\"") ; Treat ' as a string delimiter.
-              (2 ".") ; Don't highlight anything between the open and close '.
-              (3 "\"")); Treat the close ' as a string delimiter.
+              (2 ".")  ; Don't highlight anything between the open and close '.
+              (3 "\""))              ; Treat the close ' as a string delimiter.
             `(,julia-triple-quoted-string-regex
-              (1 "\"") ; Treat the first " in """ as a string delimiter.
-              (2 ".") ; Don't highlight anything between.
-              (3 "\"")))) ; Treat the last " in """ as a string delimiter.
+              (1 "\"")        ; Treat the first " in """ as a string delimiter.
+              (2 ".")         ; Don't highlight anything between.
+              (3 "\""))))     ; Treat the last " in """ as a string delimiter.
     ;; Emacs 24 and later has syntax-propertize-function, so use that instead.
     (set (make-local-variable 'syntax-propertize-function)
          julia-syntax-propertize-function))
@@ -855,6 +855,8 @@ strings."
 ;; (add-hook 'inferior-julia-mode-hook 'julia-math-mode)
 
 (when (require 'latex nil t)
+  (declare-function LaTeX-math-abbrev-prefix "latex")
+
   (defun julia-math-insert (s)
     "Inserts math symbol given by `s'"
     (when s
@@ -862,15 +864,17 @@ strings."
         (when sym
           (insert sym)))))
 
-  (define-minor-mode julia-math-mode
-    "A minor mode with easy access to TeX math commands. The
+  (with-no-warnings
+    (define-minor-mode julia-math-mode
+      "A minor mode with easy access to TeX math commands. The
 command is only entered if it is supported in Julia. The
 following commands are defined:
 
 \\{LaTeX-math-mode-map}"
-    nil nil (list (cons (LaTeX-math-abbrev-prefix) LaTeX-math-keymap))
-    (if julia-math-mode
-        (set (make-local-variable 'LaTeX-math-insert-function) 'julia-math-insert))))
+      nil nil (list (cons (LaTeX-math-abbrev-prefix) LaTeX-math-keymap))
+      (if julia-math-mode
+          (set (make-local-variable 'LaTeX-math-insert-function)
+               'julia-math-insert)))))
 
 ;; Code for `inferior-julia-mode'
 (require 'comint)
