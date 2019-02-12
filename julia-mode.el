@@ -117,6 +117,8 @@ This function provides equivalent functionality, but makes no efforts to optimis
     (modify-syntax-entry ?< "." table)
     (modify-syntax-entry ?> "." table)
     (modify-syntax-entry ?% "." table)
+
+    (modify-syntax-entry ?′ "w" table) ; \prime is a word constituent
     table)
   "Syntax table for `julia-mode'.")
 
@@ -242,7 +244,7 @@ This function provides equivalent functionality, but makes no efforts to optimis
       (not (any "="))))
 
 (defconst julia-type-regex
-  (rx symbol-start (or "immutable" "type" ;; remove after 0.6
+  (rx symbol-start (or ;;"immutable" "type" ;; remove after 0.6
                        "abstract type" "primitive type" "struct" "mutable struct")
       (1+ space) (group (1+ (or word (syntax symbol))))))
 
@@ -264,8 +266,9 @@ This function provides equivalent functionality, but makes no efforts to optimis
      "try" "catch" "return" "local" "function" "macro" "ccall"
      "finally" "break" "continue" "global" "where"
      "module" "using" "import" "export" "const" "let" "do" "in"
-     "baremodule" "importall"
-     "immutable" "type" "bitstype" "abstract" "typealias" ;; remove after 0.6
+     "baremodule"
+     ;; "importall" ;; deprecated in 0.7
+     ;; "immutable" "type" "bitstype" "abstract" "typealias" ;; removed in 1.0
      "abstract type" "primitive type" "struct" "mutable struct")
    'symbols))
 
@@ -281,16 +284,18 @@ This function provides equivalent functionality, but makes no efforts to optimis
      "UInt" "UInt8" "UInt16" "UInt32" "UInt64" "UInt128"
      "Int" "Int8" "Int16" "Int32" "Int64" "Int128"
      "BigFloat" "AbstractFloat" "Float16" "Float32" "Float64"
-     "Complex128" "Complex64"
+     ;;"Complex128" "Complex64" ;; replaced in 1.0
+     "ComplexF32" "ComplexF64"
      "Bool"
      "Cuchar" "Cshort" "Cushort" "Cint" "Cuint" "Clonglong" "Culonglong" "Cintmax_t" "Cuintmax_t"
      "Cfloat" "Cdouble" "Cptrdiff_t" "Cssize_t" "Csize_t"
-     "Cchar" "Clong" "Culong" "Cwchar_t"
+     "Cchar" "Clong" "Culong" "Cwchar_t" "Cvoid"
+     "Cstring" "Cwstring" ;; C strings made of ordinary and wide characters
      "Char" "String" "SubString"
      "Array" "DArray" "AbstractArray" "AbstractVector" "AbstractMatrix" "AbstractSparseMatrix" "SubArray" "StridedArray" "StridedVector" "StridedMatrix" "VecOrMat" "StridedVecOrMat" "DenseArray" "SparseMatrixCSC" "BitArray"
-     "Range" "OrdinalRange" "StepRange" "UnitRange" "FloatRange"
+     "AbstractRange" "OrdinalRange" "StepRange" "UnitRange" "FloatRange"
      "Tuple" "NTuple" "Vararg"
-     "DataType" "Symbol" "Function" "Vector" "Matrix" "Union" "Type" "Any" "Complex" "AbstractString" "Ptr" "Void" "Exception" "Task" "Signed" "Unsigned" "Associative" "Dict" "IO" "IOStream" "Rational" "Regex" "RegexMatch" "Set" "IntSet" "Expr" "WeakRef" "ObjectIdDict"
+     "DataType" "Symbol" "Function" "Vector" "Matrix" "Union" "Type" "Any" "Complex" "AbstractString" "Ptr" "Nothing" "Exception" "Task" "Signed" "Unsigned" "Associative" "Dict" "IO" "IOStream" "Rational" "Regex" "RegexMatch" "Set" "IntSet" "Expr" "WeakRef" "ObjectIdDict"
      "AbstractRNG" "MersenneTwister"
      )
    'symbols))
@@ -313,7 +318,7 @@ This function provides equivalent functionality, but makes no efforts to optimis
    (cons julia-macro-regex ''julia-macro-face)
    (cons
     (julia--regexp-opt
-     '("true" "false" "C_NULL" "Inf" "NaN" "Inf32" "NaN32" "nothing")
+     '("true" "false" "C_NULL" "Inf" "NaN" "Inf32" "NaN32" "nothing" "undef")
      'symbols)
     'font-lock-constant-face)
    (list julia-unquote-regex 2 'font-lock-constant-face)
@@ -330,7 +335,7 @@ This function provides equivalent functionality, but makes no efforts to optimis
 (defconst julia-block-start-keywords
   (list "if" "while" "for" "begin" "try" "function" "let" "macro"
         "quote" "do" "module"
-        "immutable" "type" ;; remove after 0.6
+        ;; "immutable" "type" ;; remove after 0.6
         "abstract type" "primitive type" "struct" "mutable struct"))
 
 ;; For keywords that begin a block without additional indentation
