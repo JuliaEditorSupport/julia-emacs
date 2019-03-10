@@ -819,18 +819,20 @@ strings."
 
 (defun julia-latexsub ()
   "Perform a LaTeX-like Unicode symbol substitution."
-  (interactive "*i")
-  (let ((orig-pt (point)))
+  (interactive "*")
+  (let ((orig-pt (point))
+        (word-end (progn (forward-word)
+                         (point))))
     (while (not (or (bobp) (= ?\\ (char-before))
 		    (= ?\s (char-syntax (char-before)))))
       (backward-char))
     (if (and (not (bobp)) (= ?\\ (char-before)))
         (progn
           (backward-char)
-          (let ((sub (gethash (buffer-substring (point) orig-pt) julia-latexsubs)))
+          (let ((sub (gethash (buffer-substring (point) word-end) julia-latexsubs)))
             (if sub
                 (progn
-                  (delete-region (point) orig-pt)
+                  (delete-region (point) word-end)
                   (insert sub))
               (goto-char orig-pt))))
       (goto-char orig-pt))))
