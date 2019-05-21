@@ -6,7 +6,7 @@
 
 @assert VERSION ≥ v"1"          # use a recent Julia version
 
-import REPL
+import REPL.REPLCompletions: latex_symbols, emoji_symbols
 
 """
 Write Emacs lisp code that populates the hash table named `varname` to `dest`, using
@@ -28,7 +28,7 @@ function write_latexsubs_hashtable(src, dest::IO, varname::AbstractString)
 end
 
 open("julia-latexsubs.el", "w") do io
-    write_latexsubs_hashtable(REPL.REPLCompletions.latex_symbols, io, "julia-latexsubs")
+    write_latexsubs_hashtable(merge(latex_symbols, emoji_symbols), io, "julia-latexsubs")
 end
 
 @info "generated latex substitutions"
