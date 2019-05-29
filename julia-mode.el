@@ -759,7 +759,8 @@ Return nil if point is not in a function, otherwise point."
         (while (and (not (eobp))
                     (forward-line 1)
                     (or (julia-syntax-comment-or-string-p)
-                        (> (current-indentation) beg-defun-indent)))))
+                        (> (current-indentation) beg-defun-indent)
+                        (looking-at-p "^\\s-*\\(?:#.*\\)*$")))))
       (end-of-line)
       (point))))
 
