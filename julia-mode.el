@@ -808,6 +808,7 @@ Return nil if point is not in a function, otherwise point."
   (set (make-local-variable 'indent-line-function) 'julia-indent-line)
   (set (make-local-variable 'beginning-of-defun-function) #'julia-beginning-of-defun)
   (set (make-local-variable 'end-of-defun-function) #'julia-end-of-defun)
+  (add-hook 'completion-at-point-functions #'julia-latexsub-completion-at-point nil t)
   (setq indent-tabs-mode nil)
   (setq imenu-generic-expression julia-imenu-generic-expression)
   (imenu-add-to-menubar "Imenu"))
@@ -821,6 +822,36 @@ strings."
 (define-key julia-mode-map (kbd "<backtab>") 'julia-manual-deindent)
 
 (defvar julia-latexsubs (make-hash-table :test 'equal))
+
+(defun julia--latexsub-start-bound ()
+  "Determine the start location for LaTeX-like symbol at point.
+If there is not a LaTeX-like symbol at point, returns nil."
+  (save-excursion (while (not (or (bobp)
+                                  (= ?\\ (char-before))
+                                  (member (char-syntax (char-before)) '(?\s ?< ?> ?\\))))
+                    (backward-char))
+                  (when (= ?\\ (char-before))
+                      (- (point) 1))))
+
+(defun julia--latexsub-end-bound ()
+  "Determine the end location for LaTeX-like symbol at point.
+If there is not a LaTeX-like symbol at point, returns nil."
+  (save-excursion (while (not (or (eobp)
+                                  (member (char-syntax (char-after)) '(?\s ?< ?> ?\\))))
+                    (forward-char))
+                  (point)))
+
+(defun julia-latexsub-completion-at-point ()
+   (let ((beg (julia--latexsub-start-bound)))
+     (when beg
+       (list beg (julia--latexsub-end-bound) julia-latexsubs :exclusive 'no
+             :annotation-function #'(lambda (s)
+                                      (concat " " (gethash s julia-latexsubs)))
+             :exit-function #'(lambda (s status)
+                                (when (eq status 'finished)
+                                  (backward-char (length s))
+                                  (delete-char (length s))
+                                  (insert (gethash s julia-latexsubs))))))))
 
 (defun julia-latexsub ()
   "Perform a LaTeX-like Unicode symbol substitution."
