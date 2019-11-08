@@ -216,7 +216,7 @@ This function provides equivalent functionality, but makes no efforts to optimis
 
 (defconst julia-forloop-in-regex
   "for +.*[^
-].* \\(in\\)\\(\\s-\\|$\\)+")
+].* \\(in\\|∈\\)\\(\\s-\\|$\\)+")
 
 (defconst julia-function-regex
   (rx line-start (* (or space "@inline" "@noinline")) symbol-start
