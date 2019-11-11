@@ -880,25 +880,47 @@ return fact(x)
 end" 'end-of-defun "n == 0" "return fact(x)[ \n]+end" 'end 2))
 
 ;;;
-;;; substitution tests
+;;; latex completion tests
 ;;;
 
-(defun julia--substitute (contents position)
-  "Call LaTeX subsitution in a buffer with `contents' at point
-`position', and return the resulting buffer."
+(defun julia--find-latex (contents position)
+  "Find bounds of LaTeX symbol in CONTENTS with point at POSITION."
   (with-temp-buffer
     (julia-mode)
     (insert contents)
     (goto-char position)
-    (julia-latexsub)
+    (cons (julia-mode--latexsub-start-symbol) (julia-mode--latexsub-end-symbol))))
+
+(ert-deftest julia--test-find-latex ()
+  (should (equal (julia--find-latex "\\alpha " 7) (cons 1 7)))
+  (should (equal (julia--find-latex "\\alpha " 3) (cons 1 7)))
+  (should (equal (julia--find-latex "x\\alpha " 8) (cons 2 8)))
+  (should (equal (julia--find-latex "x\\alpha " 3) (cons 2 8)))
+  ;; There is no valid substitution for \alpha(, but there could
+  ;; be. julia-mode-latexsub-completion-at-point-before will still
+  ;; give correct completion in this situation.
+  (should (equal (julia--find-latex "\\kappa\\alpha(" 13) (cons 7 14)))
+  (should (equal (julia--find-latex "\\kappa\\alpha(" 4) (cons 1 7))))
+
+;;;
+;;; abbrev tests
+;;;
+
+(defun julia--abbrev (contents position)
+  "Call `expand-abbrev' in buffer with CONTENTS at POSITION."
+  (with-temp-buffer
+    (julia-mode)
+    (abbrev-mode)
+    (insert contents)
+    (goto-char position)
+    (expand-abbrev)
     (buffer-string)))
 
-(ert-deftest julia--test-substitutions ()
-  (should (equal (julia--substitute "\\alpha " 7) "α "))
-  (should (equal (julia--substitute "x\\alpha " 8) "xα "))
-  (should (equal (julia--substitute "\\kappa\\alpha(" 13) "\\kappaα("))
-  (should (equal (julia--substitute "\\alpha" 7) "α"))
-  ; (should (equal (julia--substitute "\\alpha" 6) "α")) ; BROKEN
+(ert-deftest julia--test-latex-abbrev ()
+  (should (equal (julia--abbrev "\\alpha " 7) "α "))
+  (should (equal (julia--abbrev "x\\alpha " 8)  "xα "))
+  (should (equal (julia--abbrev "\\kappa\\alpha(" 13)  "\\kappaα("))
+  ; (should (equal (julia--abbrev "\\alpha(" 6)  "α")) ; BROKEN
   )
 
 ;;; syntax-propertize-function tests

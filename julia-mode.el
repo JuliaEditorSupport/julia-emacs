@@ -786,31 +786,6 @@ strings."
 (define-key julia-mode-map (kbd "<backtab>") 'julia-manual-deindent)
 
 ;; (See Julia issue #8947 for why we don't use the Emacs tex input mode.)
-(defun julia-latexsub ()
-  "Perform a LaTeX-like Unicode symbol substitution."
-  (interactive "*i")
-  (let ((orig-pt (point)))
-    (while (not (or (bobp) (= ?\\ (char-before))
-		    (= ?\s (char-syntax (char-before)))))
-      (backward-char))
-    (if (and (not (bobp)) (= ?\\ (char-before)))
-        (progn
-          (backward-char)
-          (let ((sub (gethash (buffer-substring (point) orig-pt) julia-mode-latexsubs)))
-            (if sub
-                (progn
-                  (delete-region (point) orig-pt)
-                  (insert sub))
-              (goto-char orig-pt))))
-      (goto-char orig-pt))))
-
-(defun julia-latexsub-or-indent (arg)
-  "Either indent according to mode or perform a LaTeX-like symbol substution"
-  (interactive "*i")
-  (if (julia-latexsub)
-      (indent-for-tab-command arg)))
-(define-key julia-mode-map (kbd "TAB") 'julia-latexsub-or-indent)
-
 (defun julia-mode--latexsub-start-symbol ()
   "Determine the start location for LaTeX-like symbol at point.
 If there is not a LaTeX-like symbol at point, return nil."
@@ -898,10 +873,7 @@ following commands are defined:
   "Regexp for matching `inferior-julia' prompt.")
 
 (defvar inferior-julia-mode-map
-  (let ((map2 (nconc (make-sparse-keymap) comint-mode-map)))
-    ;; example definition
-    (define-key map2 (kbd "TAB") 'julia-latexsub-or-indent)
-    map2)
+  (nconc (make-sparse-keymap) comint-mode-map)
   "Basic mode map for `inferior-julia-mode'.")
 
 ;;;###autoload
