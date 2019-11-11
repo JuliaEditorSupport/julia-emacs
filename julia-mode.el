@@ -104,7 +104,8 @@ This function provides equivalent functionality, but makes no efforts to optimis
     (modify-syntax-entry ?'  "." table)
     (modify-syntax-entry ?\" "\"" table)
     (modify-syntax-entry ?` "\"" table)
-    (modify-syntax-entry ?\\ "\\" table)
+    ;; \ is a julia operator
+    (modify-syntax-entry ?\\ "." table)
 
     (modify-syntax-entry ?. "." table)
     (modify-syntax-entry ?? "." table)
