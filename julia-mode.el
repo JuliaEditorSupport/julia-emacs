@@ -815,6 +815,10 @@ strings."
 
 (defvar julia-latexsubs (make-hash-table :test 'equal))
 
+;;; populate LaTeX symbols hash table from a generated file.
+;;; (See Julia issue #8947 for why we don't use the Emacs tex input mode.)
+(load (expand-file-name "julia-latexsubs" (file-name-directory load-file-name)))
+
 (defun julia--latexsub-start-bound ()
   "Determine the start location for LaTeX-like symbol at point.
 If there is not a LaTeX-like symbol at point, returns nil."
@@ -844,39 +848,6 @@ If there is not a LaTeX-like symbol at point, returns nil."
                                   (backward-char (length s))
                                   (delete-char (length s))
                                   (insert (gethash s julia-latexsubs))))))))
-
-(defun julia-latexsub ()
-  "Perform a LaTeX-like Unicode symbol substitution."
-  (interactive "*i")
-  (let ((orig-pt (point)))
-    (while (not (or (bobp) (= ?\\ (char-before))
-		    (= ?\s (char-syntax (char-before)))))
-      (backward-char))
-    (if (and (not (bobp)) (= ?\\ (char-before)))
-        (progn
-          (backward-char)
-          (let ((sub (gethash (buffer-substring (point) orig-pt) julia-latexsubs)))
-            (if sub
-                (progn
-                  (delete-region (point) orig-pt)
-                  (insert sub))
-              (goto-char orig-pt))))
-      (goto-char orig-pt))))
-
-(defalias 'latexsub 'julia-latexsub)
-
-(defun julia-latexsub-or-indent (arg)
-  "Either indent according to mode or perform a LaTeX-like symbol substution"
-  (interactive "*i")
-  (if (latexsub)
-      (indent-for-tab-command arg)))
-(define-key julia-mode-map (kbd "TAB") 'julia-latexsub-or-indent)
-
-(defalias 'latexsub-or-indent 'julia-latexsub-or-indent)
-
-;;; populate LaTeX symbols hash table from a generated file.
-;;; (See Julia issue #8947 for why we don't use the Emacs tex input mode.)
-(load (expand-file-name "julia-latexsubs" (file-name-directory load-file-name)))
 
 ;; Math insertion in julia. Use it with
 ;; (add-hook 'julia-mode-hook 'julia-math-mode)
@@ -921,10 +892,7 @@ following commands are defined:
   "Regexp for matching `inferior-julia' prompt.")
 
 (defvar inferior-julia-mode-map
-  (let ((map (nconc (make-sparse-keymap) comint-mode-map)))
-    ;; example definition
-    (define-key map (kbd "TAB") 'julia-latexsub-or-indent)
-    map)
+  (nconc (make-sparse-keymap) comint-mode-map)
   "Basic mode map for `inferior-julia-mode'.")
 
 ;;;###autoload
@@ -950,6 +918,7 @@ following commands are defined:
   nil "Julia"
   (setq comint-prompt-regexp julia-prompt-regexp)
   (setq comint-prompt-read-only t)
+  (add-hook 'completion-at-point-functions #'julia-latexsub-completion-at-point nil t)
   (set (make-local-variable 'font-lock-defaults) '(julia-font-lock-keywords t))
   (set (make-local-variable 'paragraph-start) julia-prompt-regexp)
   (set (make-local-variable 'indent-line-function) 'julia-indent-line))
