@@ -389,6 +389,12 @@ Note this is Emacs' notion of what is highlighted as a string.
 As a result, it is true inside \"foo\", `foo` and 'f'."
   (nth 3 (or syntax-ppss (syntax-ppss))))
 
+(defun julia-in-multiline-string (&optional syntax-pps)
+  "Return non-nil if point is inside multi-line string using SYNTAX-PPS."
+  (and (julia-in-string syntax-pps)
+       (save-excursion (beginning-of-line)
+                       (julia-in-string syntax-pps))))
+
 (defun julia-in-brackets ()
   "Return non-nil if point is inside square brackets."
   (let ((start-pos (point))
@@ -584,19 +590,6 @@ only comments."
             ;; above
             (+ julia-indent-offset prev-indent)))))))
 
-(defun julia-indent-in-string ()
-  "Indentation inside strings with newlines is \"manual\",
-meaning always increase indent on TAB and decrease on S-TAB."
-  (save-excursion
-    (beginning-of-line)
-    (when (julia-in-string)
-      (if (member this-command '(julia-latexsub-or-indent
-                                 ess-indent-or-complete))
-          (+ julia-indent-offset (current-indentation))
-        ;; return the current indentation to prevent other functions from
-        ;; indenting inside strings
-        (current-indentation)))))
-
 (defun julia-indent-import-export-using ()
   "Indent offset for lines that follow `import` or `export`, otherwise nil."
   (when (julia-following-import-export-using)
@@ -605,37 +598,36 @@ meaning always increase indent on TAB and decrease on S-TAB."
 (defun julia-indent-line ()
   "Indent current line of julia code."
   (interactive)
-  (let* ((point-offset (- (current-column) (current-indentation))))
-    (indent-line-to
-     (or
-      ;; note: if this first function returns nil the beginning of the line
-      ;; cannot be in a string
-      (julia-indent-in-string)
-      ;; If we're inside an open paren, indent to line up arguments. After this,
-      ;; we cannot be inside parens which includes brackets
-      (julia-paren-indent)
-      ;; indent due to hanging operators (lines ending in an operator)
-      (julia-indent-hanging)
-      ;; indent for import and export
-      (julia-indent-import-export-using)
-      ;; Indent according to how many nested blocks we are in.
-      (save-excursion
-        (beginning-of-line)
-        ;; jump out of any comments
-        (let ((state (syntax-ppss)))
-          (when (nth 4 state)
-            (goto-char (nth 8 state))))
-        (forward-to-indentation 0)
-        (let ((endtok (julia-at-keyword julia-block-end-keywords))
-              (last-open-block (julia-last-open-block (- (point) julia-max-block-lookback))))
-          (max 0 (+ (or last-open-block 0)
-                    (if (or endtok
-                            (julia-at-keyword julia-block-start-keywords-no-indent))
-                        (- julia-indent-offset) 0)))))))
-    ;; Point is now at the beginning of indentation, restore it
-    ;; to its original position (relative to indentation).
-    (when (>= point-offset 0)
-      (move-to-column (+ (current-indentation) point-offset)))))
+  (if (julia-in-multiline-string)
+      'noindent
+    (let* ((point-offset (- (current-column) (current-indentation))))
+      (indent-line-to
+       (or
+        ;; If we're inside an open paren, indent to line up arguments. After this,
+        ;; we cannot be inside parens which includes brackets
+        (julia-paren-indent)
+        ;; indent due to hanging operators (lines ending in an operator)
+        (julia-indent-hanging)
+        ;; indent for import and export
+        (julia-indent-import-export-using)
+        ;; Indent according to how many nested blocks we are in.
+        (save-excursion
+          (beginning-of-line)
+          ;; jump out of any comments
+          (let ((state (syntax-ppss)))
+            (when (nth 4 state)
+              (goto-char (nth 8 state))))
+          (forward-to-indentation 0)
+          (let ((endtok (julia-at-keyword julia-block-end-keywords))
+                (last-open-block (julia-last-open-block (- (point) julia-max-block-lookback))))
+            (max 0 (+ (or last-open-block 0)
+                      (if (or endtok
+                              (julia-at-keyword julia-block-start-keywords-no-indent))
+                          (- julia-indent-offset) 0)))))))
+      ;; Point is now at the beginning of indentation, restore it
+      ;; to its original position (relative to indentation).
+      (when (>= point-offset 0)
+        (move-to-column (+ (current-indentation) point-offset))))))
 
 (defalias 'julia-mode-prog-mode
   (if (fboundp 'prog-mode)
