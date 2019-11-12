@@ -922,9 +922,9 @@ following commands are defined:
 
 \\<inferior-julia-mode-map>"
   nil "Julia"
-  (setq comint-prompt-regexp julia-prompt-regexp)
-  (setq comint-prompt-read-only t)
   (when julia-force-tab-complete (setq-local tab-always-indent 'complete))
+  (setq-local comint-prompt-regexp julia-prompt-regexp)
+  (setq-local comint-prompt-read-only t)
   (add-hook 'completion-at-point-functions #'julia-latexsub-completion-at-point nil t)
   (set (make-local-variable 'font-lock-defaults) '(julia-font-lock-keywords t))
   (set (make-local-variable 'paragraph-start) julia-prompt-regexp)
