@@ -52,6 +52,11 @@
   :type 'integer
   :group 'julia)
 
+(defcustom julia-force-tab-complete t
+  "Use Tab for completion instead of M-Tab in `julia-mode'.
+This overrides `tab-always-indent' in `julia-mode' buffers."
+  :type 'boolean)
+
 (defface julia-macro-face
   '((t :inherit font-lock-preprocessor-face))
   "Face for Julia macro invocations."
@@ -801,6 +806,7 @@ Return nil if point is not in a function, otherwise point."
   (set (make-local-variable 'beginning-of-defun-function) #'julia-beginning-of-defun)
   (set (make-local-variable 'end-of-defun-function) #'julia-end-of-defun)
   (add-hook 'completion-at-point-functions #'julia-latexsub-completion-at-point nil t)
+  (when julia-force-tab-complete (setq-local tab-always-indent 'complete))
   (setq indent-tabs-mode nil)
   (setq imenu-generic-expression julia-imenu-generic-expression)
   (imenu-add-to-menubar "Imenu"))
@@ -918,6 +924,7 @@ following commands are defined:
   nil "Julia"
   (setq comint-prompt-regexp julia-prompt-regexp)
   (setq comint-prompt-read-only t)
+  (when julia-force-tab-complete (setq-local tab-always-indent 'complete))
   (add-hook 'completion-at-point-functions #'julia-latexsub-completion-at-point nil t)
   (set (make-local-variable 'font-lock-defaults) '(julia-font-lock-keywords t))
   (set (make-local-variable 'paragraph-start) julia-prompt-regexp)
