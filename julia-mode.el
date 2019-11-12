@@ -52,6 +52,13 @@
   :safe (lambda (n) (and (> n 1) (<= n 8)))
   :type 'integer)
 
+(defcustom julia-force-tab-complete t
+  "Use Tab for completion instead of M-Tab in `julia-mode'.
+This overrides `tab-always-indent' in `julia-mode' buffers. It also
+enables `abbrev-mode' so that inserting a space character will replace
+a LaTeX string with a unicode symbol."
+  :type 'boolean)
+
 (defface julia-macro-face
   '((t :inherit font-lock-preprocessor-face))
   "Face for Julia macro invocations.")
@@ -773,6 +780,11 @@ Return nil if point is not in a function, otherwise point."
             #'julia-mode-latexsub-completion-at-point-before nil t)
   (add-hook 'completion-at-point-functions
             #'julia-mode-latexsub-completion-at-point-around nil t)
+  (when julia-force-tab-complete
+    (setq-local tab-always-indent 'complete)
+    ;; To substitute a symbol for an abbrev, user will have to either
+    ;; insert a space after or call expand-abbrev (C-x a e)
+    (abbrev-mode 1))
   (setq indent-tabs-mode nil)
   (setq imenu-generic-expression julia-imenu-generic-expression)
   (imenu-add-to-menubar "Imenu"))
@@ -906,6 +918,9 @@ following commands are defined:
   (setq-local font-lock-defaults '(julia-font-lock-keywords t))
   (setq-local paragraph-start julia-prompt-regexp)
   (setq-local indent-line-function #'julia-indent-line)
+  (when julia-force-tab-complete
+    (setq-local tab-always-indent 'complete)
+    (abbrev-mode 1))
   (add-hook 'completion-at-point-functions
             #'julia-mode-latexsub-completion-at-point-before nil t)
   (add-hook 'completion-at-point-functions
