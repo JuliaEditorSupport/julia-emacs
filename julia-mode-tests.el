@@ -613,8 +613,8 @@ end" 'end-of-defun "n == 0" "return fact(x)[ \n]+end" 'end 2))
   (should (equal (julia--substitute "\\alpha " 7) "α "))
   (should (equal (julia--substitute "x\\alpha " 8) "xα "))
   (should (equal (julia--substitute "\\kappa\\alpha(" 13) "\\kappaα("))
-  ; (should (eq (julia--substitute "\\alpha" 7) "α")) ; BROKEN
-  ; (should (eq (julia--substitute "\\alpha" 6) "α")) ; BROKEN
+  (should (equal (julia--substitute "\\alpha" 7) "α"))
+  ; (should (equal (julia--substitute "\\alpha" 6) "α")) ; BROKEN
   )
 
 ;;;
