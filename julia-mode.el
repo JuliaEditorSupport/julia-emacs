@@ -731,12 +731,11 @@ Return non-nil (point) if point moved to `beginning-of-defun'."
       (setq arg (if (> arg 0) (1- arg) (1+ arg))))
     found))
 
-(defun julia-end-of-defun (&optional arg)
+(defun julia-end-of-defun ()
   "Move point to the end of the current function.
 Return nil if point is not in a function, otherwise point."
   (interactive)
-  (let ((beg-defun-indent)
-        (beg-pos (point)))
+  (let ((beg-defun-indent))
     (when (or (julia-looking-at-beginning-of-defun)
               (julia-beginning-of-defun 1)
               (julia-beginning-of-defun -1))
@@ -905,8 +904,7 @@ following commands are defined:
 (defun inferior-julia ()
     "Run an inferior instance of `julia' inside Emacs."
     (interactive)
-    (let ((julia-program julia-program)
-          (buffer (get-buffer-create "*Julia*")))
+    (let ((julia-program julia-program))
       (when (not (comint-check-proc "*Julia*"))
         (apply #'make-comint-in-buffer "Julia" "*Julia*"
                julia-program nil julia-arguments))
