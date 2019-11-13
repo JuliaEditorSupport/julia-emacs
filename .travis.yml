@@ -3,7 +3,6 @@ sudo: required
 dist: trusty
 env:
   matrix:
-    - EMACS=emacs23
     - EMACS=emacs24
     - EMACS=emacs-snapshot
 
@@ -16,11 +15,6 @@ branches:
     - master
 
 install:
-  - if [ "$EMACS" = 'emacs23' ]; then
-        sudo apt-get -qq update &&
-        sudo apt-get -qq -f install &&
-        sudo apt-get -qq install emacs23 emacs23-el;
-    fi
   - if [ "$EMACS" = 'emacs24' ]; then
         sudo apt-get -qq update &&
         sudo apt-get -qq -f install &&
@@ -37,9 +31,7 @@ install:
 script:
   - $EMACS --version
   - $EMACS --batch -L . --eval "(and (>= emacs-major-version 24) (setq byte-compile-error-on-warn t))" -f batch-byte-compile julia-mode.el
-  - if [ "$EMACS" != emacs23 ]; then
-      $EMACS -batch -L . -l ert -l julia-mode-tests.el -f ert-run-tests-batch-and-exit;
-    fi
+  - $EMACS -batch -L . -l ert -l julia-mode-tests.el -f ert-run-tests-batch-and-exit;
 
 notifications:
   email: false
