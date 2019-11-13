@@ -515,7 +515,7 @@ y*y" 'beginning-of-defun "y\\*y" 1 nil 2))
     "macro current_module()
 return VERSION >= v\"0.7-\" :(@__MODULE__) : :(current_module())))
 end" 'beginning-of-defun "@" 1))
-  
+
 (ert-deftest julia--test-beginning-of-defun-1 ()
   "Point moves to beginning of defun in 'function's."
   (julia--should-move-point
@@ -594,6 +594,32 @@ end
 end
 return fact(x)
 end" 'end-of-defun "n == 0" "return fact(x)[ \n]+end" 'end 2))
+
+;;;
+;;; substitution tests
+;;;
+
+(defun julia--substitute (contents position)
+  "Call LaTeX subsitution in a buffer with `contents' at point
+`position', and return the resulting buffer."
+  (with-temp-buffer
+    (julia-mode)
+    (insert contents)
+    (goto-char position)
+    (julia-latexsub)
+    (buffer-string)))
+
+(ert-deftest julia--test-substitutions ()
+  (should (equal (julia--substitute "\\alpha " 7) "α "))
+  (should (equal (julia--substitute "x\\alpha " 8) "xα "))
+  (should (equal (julia--substitute "\\kappa\\alpha(" 13) "\\kappaα("))
+  (should (equal (julia--substitute "\\alpha" 7) "α"))
+  ; (should (equal (julia--substitute "\\alpha" 6) "α")) ; BROKEN
+  )
+
+;;;
+;;; run all tests
+;;;
 
 (defun julia--run-tests ()
   (interactive)
