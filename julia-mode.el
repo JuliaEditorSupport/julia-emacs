@@ -1,8 +1,8 @@
-;;; julia-mode.el --- Major mode for editing Julia source code
+;;; julia-mode.el --- Major mode for editing Julia source code -*- lexical-binding: t -*-
 
 ;; Copyright (C) 2009-2014 Julia contributors
 ;; URL: https://github.com/JuliaLang/julia
-;; Version: 0.3
+;; Version: 0.4
 ;; Keywords: languages
 
 ;;; Usage:
@@ -35,10 +35,7 @@
 
 ;;; Code:
 
-;; We can't use cl-lib whilst supporting Emacs 23 users who don't use
-;; ELPA.
-(with-no-warnings
-  (require 'cl)) ;; incf, decf, plusp
+(require 'cl-lib)
 
 (defvar julia-mode-hook nil)
 
@@ -402,14 +399,14 @@ As a result, it is true inside \"foo\", `foo` and 'f'."
         (unless (or (julia-in-string) (julia-in-comment))
 
           (when (looking-at (rx "["))
-            (incf open-count))
+            (cl-incf open-count))
           (when (looking-at (rx "]"))
-            (decf open-count)))
+            (cl-decf open-count)))
 
         (forward-char 1)))
 
     ;; If we've opened more than we've closed, we're inside brackets.
-    (plusp open-count)))
+    (cl-plusp open-count)))
 
 (defun julia-at-keyword (kw-list)
   "Return the word at point if it matches any keyword in KW-LIST.
@@ -462,7 +459,7 @@ symbol, gives up when this is not true."
   "Return the position of the last open block, if one found.
 Do not move back beyond position MIN."
   (save-excursion
-    (let ((count 0))
+    (let ((cl-count 0))
       (while (not (or (> count 0) (<= (point) min)))
         (julia-safe-backward-sexp)
         (setq count
@@ -548,7 +545,7 @@ the (possibly narrowed) buffer, so there is nowhere else to go."
          ((and (= 0 this-move)
                (or (looking-at-p "^\\s-*\\(?:#.*\\)*$")
                    (julia-in-comment)))
-          (incf moved))
+          (cl-incf moved))
          ;; success
          ((= 0 this-move)
           (throw 'result (1+ moved)))
@@ -898,10 +895,10 @@ following commands are defined:
   "Regexp for matching `inferior-julia' prompt.")
 
 (defvar inferior-julia-mode-map
-  (let ((map (nconc (make-sparse-keymap) comint-mode-map)))
+  (let ((map2 (nconc (make-sparse-keymap) comint-mode-map)))
     ;; example definition
-    (define-key map (kbd "TAB") 'julia-latexsub-or-indent)
-    map)
+    (define-key map2 (kbd "TAB") 'julia-latexsub-or-indent)
+    map2)
   "Basic mode map for `inferior-julia-mode'.")
 
 ;;;###autoload
