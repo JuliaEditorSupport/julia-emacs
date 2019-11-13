@@ -459,17 +459,17 @@ symbol, gives up when this is not true."
   "Return the position of the last open block, if one found.
 Do not move back beyond position MIN."
   (save-excursion
-    (let ((cl-count 0))
-      (while (not (or (> count 0) (<= (point) min)))
+    (let ((nesting-count 0))
+      (while (not (or (> nesting-count 0) (<= (point) min)))
         (julia-safe-backward-sexp)
-        (setq count
+        (setq nesting-count
               (cond ((julia-at-keyword julia-block-start-keywords)
-                     (+ count 1))
+                     (+ nesting-count 1))
                     ((and (equal (current-word t) "end")
                           (not (julia-in-comment)))
-                     (- count 1))
-                    (t count))))
-      (if (> count 0)
+                     (- nesting-count 1))
+                    (t nesting-count))))
+      (if (> nesting-count 0)
           (point)
         nil))))
 
