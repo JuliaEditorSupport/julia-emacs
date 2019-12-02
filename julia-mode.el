@@ -854,7 +854,10 @@ strings."
 ;;; populate LaTeX symbols hash table from a generated file.
 ;;; (See Julia issue #8947 for why we don't use the Emacs tex input mode.)
 (load (expand-file-name "julia-latexsubs"
-                        (file-name-directory (or buffer-file-name load-file-name))))
+                        (file-name-directory
+                         (if load-in-progress
+                             load-file-name
+                           buffer-file-name))))
 
 ;; Math insertion in julia. Use it with
 ;; (add-hook 'julia-mode-hook 'julia-math-mode)
