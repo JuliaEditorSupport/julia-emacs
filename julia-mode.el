@@ -39,6 +39,8 @@
 ;; ELPA.
 (with-no-warnings
   (require 'cl)) ;; incf, decf, plusp
+;; populate LaTeX symbols hash table from a generated file.
+(require 'julia-mode-latexsubs)
 
 (defvar julia-mode-hook nil)
 
@@ -820,8 +822,7 @@ strings."
   (indent-line-to (max 0 (- (current-indentation) julia-indent-offset))))
 (define-key julia-mode-map (kbd "<backtab>") 'julia-manual-deindent)
 
-(defvar julia-latexsubs (make-hash-table :test 'equal))
-
+;; (See Julia issue #8947 for why we don't use the Emacs tex input mode.)
 (defun julia-latexsub ()
   "Perform a LaTeX-like Unicode symbol substitution."
   (interactive "*i")
@@ -832,7 +833,7 @@ strings."
     (if (and (not (bobp)) (= ?\\ (char-before)))
         (progn
           (backward-char)
-          (let ((sub (gethash (buffer-substring (point) orig-pt) julia-latexsubs)))
+          (let ((sub (gethash (buffer-substring (point) orig-pt) julia-mode-latexsubs)))
             (if sub
                 (progn
                   (delete-region (point) orig-pt)
@@ -851,11 +852,6 @@ strings."
 
 (defalias 'latexsub-or-indent 'julia-latexsub-or-indent)
 
-;;; populate LaTeX symbols hash table from a generated file.
-;;; (See Julia issue #8947 for why we don't use the Emacs tex input mode.)
-(load (expand-file-name "julia-latexsubs"
-                        (file-name-directory (or buffer-file-name load-file-name))))
-
 ;; Math insertion in julia. Use it with
 ;; (add-hook 'julia-mode-hook 'julia-math-mode)
 ;; (add-hook 'inferior-julia-mode-hook 'julia-math-mode)
@@ -866,7 +862,7 @@ strings."
   (defun julia-math-insert (s)
     "Inserts math symbol given by `s'"
     (when s
-      (let ((sym (gethash (concat "\\" s) julia-latexsubs)))
+      (let ((sym (gethash (concat "\\" s) julia-mode-latexsubs)))
         (when sym
           (insert sym)))))
 
