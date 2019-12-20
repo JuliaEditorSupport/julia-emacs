@@ -1,6 +1,6 @@
 language: minimal
 sudo: required
-dist: bionic
+dist: xenial
 env:
   matrix:
     - EMACS=emacs24
