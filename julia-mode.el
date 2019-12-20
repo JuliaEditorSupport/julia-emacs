@@ -1,8 +1,8 @@
-;;; julia-mode.el --- Major mode for editing Julia source code
+;;; julia-mode.el --- Major mode for editing Julia source code -*- lexical-binding: t -*-
 
 ;; Copyright (C) 2009-2014 Julia contributors
 ;; URL: https://github.com/JuliaLang/julia
-;; Version: 0.3
+;; Version: 0.4
 ;; Keywords: languages
 
 ;;; Usage:
@@ -35,11 +35,7 @@
 
 ;;; Code:
 
-;; We can't use cl-lib whilst supporting Emacs 23 users who don't use
-;; ELPA.
-(with-no-warnings
-  (require 'cl)) ;; incf, decf, plusp
-;; populate LaTeX symbols hash table from a generated file.
+(require 'cl-lib)
 (require 'julia-mode-latexsubs)
 
 (defvar julia-mode-hook nil)
@@ -404,14 +400,14 @@ As a result, it is true inside \"foo\", `foo` and 'f'."
         (unless (or (julia-in-string) (julia-in-comment))
 
           (when (looking-at (rx "["))
-            (incf open-count))
+            (cl-incf open-count))
           (when (looking-at (rx "]"))
-            (decf open-count)))
+            (cl-decf open-count)))
 
         (forward-char 1)))
 
     ;; If we've opened more than we've closed, we're inside brackets.
-    (plusp open-count)))
+    (cl-plusp open-count)))
 
 (defun julia-at-keyword (kw-list)
   "Return the word at point if it matches any keyword in KW-LIST.
@@ -464,17 +460,17 @@ symbol, gives up when this is not true."
   "Return the position of the last open block, if one found.
 Do not move back beyond position MIN."
   (save-excursion
-    (let ((count 0))
-      (while (not (or (> count 0) (<= (point) min)))
+    (let ((nesting-count 0))
+      (while (not (or (> nesting-count 0) (<= (point) min)))
         (julia-safe-backward-sexp)
-        (setq count
+        (setq nesting-count
               (cond ((julia-at-keyword julia-block-start-keywords)
-                     (+ count 1))
+                     (+ nesting-count 1))
                     ((and (equal (current-word t) "end")
                           (not (julia-in-comment)))
-                     (- count 1))
-                    (t count))))
-      (if (> count 0)
+                     (- nesting-count 1))
+                    (t nesting-count))))
+      (if (> nesting-count 0)
           (point)
         nil))))
 
@@ -550,7 +546,7 @@ the (possibly narrowed) buffer, so there is nowhere else to go."
          ((and (= 0 this-move)
                (or (looking-at-p "^\\s-*\\(?:#.*\\)*$")
                    (julia-in-comment)))
-          (incf moved))
+          (cl-incf moved))
          ;; success
          ((= 0 this-move)
           (throw 'result (1+ moved)))
@@ -736,12 +732,11 @@ Return non-nil (point) if point moved to `beginning-of-defun'."
       (setq arg (if (> arg 0) (1- arg) (1+ arg))))
     found))
 
-(defun julia-end-of-defun (&optional arg)
+(defun julia-end-of-defun ()
   "Move point to the end of the current function.
 Return nil if point is not in a function, otherwise point."
   (interactive)
-  (let ((beg-defun-indent)
-        (beg-pos (point)))
+  (let ((beg-defun-indent))
     (when (or (julia-looking-at-beginning-of-defun)
               (julia-beginning-of-defun 1)
               (julia-beginning-of-defun -1))
@@ -895,18 +890,17 @@ following commands are defined:
   "Regexp for matching `inferior-julia' prompt.")
 
 (defvar inferior-julia-mode-map
-  (let ((map (nconc (make-sparse-keymap) comint-mode-map)))
+  (let ((map2 (nconc (make-sparse-keymap) comint-mode-map)))
     ;; example definition
-    (define-key map (kbd "TAB") 'julia-latexsub-or-indent)
-    map)
+    (define-key map2 (kbd "TAB") 'julia-latexsub-or-indent)
+    map2)
   "Basic mode map for `inferior-julia-mode'.")
 
 ;;;###autoload
 (defun inferior-julia ()
     "Run an inferior instance of `julia' inside Emacs."
     (interactive)
-    (let ((julia-program julia-program)
-          (buffer (get-buffer-create "*Julia*")))
+    (let ((julia-program julia-program))
       (when (not (comint-check-proc "*Julia*"))
         (apply #'make-comint-in-buffer "Julia" "*Julia*"
                julia-program nil julia-arguments))
