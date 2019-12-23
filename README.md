@@ -21,3 +21,15 @@ Clone this repository, then use
 (add-to-list 'load-path "path-to-julia-mode")
 (require 'julia-mode)
 ```
+
+# Contributing
+
+Contributions are welcome, in the form of pull requests.
+
+Please
+
+1. add unit tests whenever possible. This may require that functions are broken up into an interface and a backend function, then you can test the backend one.
+
+2. add a short summary in the [Unreleased section of the CHANGELOG](CHANGELOG.md#unreleased).
+
+We do our best to provide feedback within 2 weeks, feel free to bump in a comment after that.
