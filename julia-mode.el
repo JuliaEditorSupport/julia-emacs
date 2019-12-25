@@ -367,14 +367,13 @@ Based on `python-syntax-stringify'."
                            'syntax-table (string-to-syntax "|"))))))
 
 (defconst julia-syntax-propertize-function
-  (unless (< emacs-major-version 24)
-    (syntax-propertize-rules
-     ("\"\"\""
-      (0 (ignore (julia-stringify-triple-quote))))
-     (julia-char-regex
-      (1 "\"")                 ; Treat ' as a string delimiter.
-      (2 ".")                  ; Don't highlight anything between.
-      (3 "\""))))) ; Treat the last " in """ as a string delimiter.
+  (syntax-propertize-rules
+   ("\"\"\""
+    (0 (ignore (julia-stringify-triple-quote))))
+   (julia-char-regex
+    (1 "\"")                    ; Treat ' as a string delimiter.
+    (2 ".")                     ; Don't highlight anything between.
+    (3 "\"")))) ; Treat the last " in """ as a string delimiter.
 
 (defun julia-in-comment (&optional syntax-ppss)
   "Return non-nil if point is inside a comment using SYNTAX-PPSS.
@@ -635,11 +634,6 @@ meaning always increase indent on TAB and decrease on S-TAB."
     (when (>= point-offset 0)
       (move-to-column (+ (current-indentation) point-offset)))))
 
-(defalias 'julia-mode-prog-mode
-  (if (fboundp 'prog-mode)
-      'prog-mode
-    'fundamental-mode))
-
 
 ;;; Navigation
 ;; based off python.el
@@ -781,27 +775,14 @@ Return nil if point is not in a function, otherwise point."
     ))
 
 ;;;###autoload
-(define-derived-mode julia-mode julia-mode-prog-mode "Julia"
+(define-derived-mode julia-mode prog-mode "Julia"
   "Major mode for editing julia code."
   (set-syntax-table julia-mode-syntax-table)
   (set (make-local-variable 'comment-start) "# ")
   (set (make-local-variable 'comment-start-skip) "#+\\s-*")
   (set (make-local-variable 'font-lock-defaults) '(julia-font-lock-keywords))
-  (if (< emacs-major-version 24)
-      ;; Emacs 23 doesn't have syntax-propertize-function
-      (set (make-local-variable 'font-lock-syntactic-keywords)
-           (list
-            `(,julia-char-regex
-              (1 "\"") ; Treat ' as a string delimiter.
-              (2 ".")  ; Don't highlight anything between the open and close '.
-              (3 "\""))              ; Treat the close ' as a string delimiter.
-            `(,julia-triple-quoted-string-regex
-              (1 "\"")        ; Treat the first " in """ as a string delimiter.
-              (2 ".")         ; Don't highlight anything between.
-              (3 "\""))))     ; Treat the last " in """ as a string delimiter.
-    ;; Emacs 24 and later has syntax-propertize-function, so use that instead.
-    (set (make-local-variable 'syntax-propertize-function)
-         julia-syntax-propertize-function))
+  (set (make-local-variable 'syntax-propertize-function)
+       julia-syntax-propertize-function)
   (set (make-local-variable 'indent-line-function) 'julia-indent-line)
   (set (make-local-variable 'beginning-of-defun-function) #'julia-beginning-of-defun)
   (set (make-local-variable 'end-of-defun-function) #'julia-end-of-defun)
