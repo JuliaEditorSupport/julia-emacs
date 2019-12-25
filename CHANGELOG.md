@@ -1,5 +1,7 @@
 # Unreleased
 
+- increase lookback ([#98](https://github.com/JuliaEditorSupport/julia-emacs/pull/98)), fixes [#5](https://github.com/JuliaEditorSupport/julia-emacs/issues/5)
+
 - fix derived parent mode ([#66](https://github.com/JuliaEditorSupport/julia-emacs/pull/66))
 
 - load LaTeX substitution table as a feature ([#93](https://github.com/JuliaEditorSupport/julia-emacs/pull/93))
