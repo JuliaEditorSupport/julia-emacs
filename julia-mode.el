@@ -490,12 +490,13 @@ beginning of the buffer."
   (unless (eq (point) (point-min))
     (backward-char)))
 
-(defcustom julia-max-block-lookback 5000
-  "When indenting, don't look back more than this
-many characters to see if there are unclosed blocks.
+(defcustom julia-max-block-lookback 20000
+  "When indenting, don't look back more than this many characters
+to see if there are unclosed blocks.
 
-This variable has a moderate effect on indent performance if set too
-high, but stops indenting in the middle of long blocks if set too low."
+This variable has a small effect on indent performance if set
+too high, but stops indenting in the middle of long blocks if set
+too low."
   :type 'integer
   :group 'julia)
 
