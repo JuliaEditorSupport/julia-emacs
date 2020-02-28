@@ -774,6 +774,12 @@ Return nil if point is not in a function, otherwise point."
   (setq-local indent-line-function #'julia-indent-line)
   (setq-local beginning-of-defun-function #'julia-beginning-of-defun)
   (setq-local end-of-defun-function #'julia-end-of-defun)
+  ;; If completion before point has higher priority than around, \lamb
+  ;; can get completed to \lambdamb
+  (add-hook 'completion-at-point-functions
+            #'julia-mode-latexsub-completion-at-point-before nil t)
+  (add-hook 'completion-at-point-functions
+            #'julia-mode-latexsub-completion-at-point-around nil t)
   (setq indent-tabs-mode nil)
   (setq imenu-generic-expression julia-imenu-generic-expression)
   (imenu-add-to-menubar "Imenu"))
@@ -811,6 +817,51 @@ strings."
   (if (julia-latexsub)
       (indent-for-tab-command arg)))
 (define-key julia-mode-map (kbd "TAB") 'julia-latexsub-or-indent)
+
+(defun julia-mode--latexsub-start-symbol ()
+  "Determine the start location for LaTeX-like symbol at point.
+If there is not a LaTeX-like symbol at point, return nil."
+  (save-excursion
+    ;; move backward until character can't be part of LaTeX, whitespace or beginning of file
+    (while (not (or (bobp)
+                    (= ?\\ (char-before))
+                    ;; Checks char not in whitespace, comment, or
+                    ;; escape. This works better than checking char is
+                    ;; in word constitutents (?w) because things like
+                    ;; "\^(", "\1/", and "\^=)" are valid.
+                    (member (char-syntax (char-before)) '(?\s ?< ?> ?\\))))
+      (backward-char))
+    (when (= ?\\ (char-before))
+      (- (point) 1))))
+
+(defun julia-mode--latexsub-end-symbol ()
+  "Determine the end location for LaTeX-like symbol at point."
+  (save-excursion
+    (while (not (or (eobp)
+                    (member (char-syntax (char-after)) '(?\s ?< ?> ?\\))))
+      (forward-char))
+    (point)))
+
+;; Sometimes you want to complete a symbol point is in middle of
+(defun julia-mode-latexsub-completion-at-point-around ()
+  "Return completion for LaTeX-like symbol around point.
+Suitable for use in `completion-at-point-functions'."
+  (let ((beg (julia-mode--latexsub-start-symbol)))
+    (when beg
+      (list beg (julia-mode--latexsub-end-symbol) julia-mode-latexsubs
+            :exclusive 'no
+            :annotation-function #'(lambda (s)
+                                     (concat " " (gethash s julia-mode-latexsubs)))))))
+
+;; Sometimes you want to complete a symbol point is at end of (with no space after)
+(defun julia-mode-latexsub-completion-at-point-before ()
+  "Return completion for LaTeX-like symbol before point.
+Suitable for use in `completion-at-point-functions'."
+  (let ((beg (julia-mode--latexsub-start-symbol)))
+    (when beg
+      (list beg (point) julia-mode-latexsubs :exclusive 'no
+            :annotation-function #'(lambda (s)
+                                     (concat " " (gethash s julia-mode-latexsubs)))))))
 
 ;; Math insertion in julia. Use it with
 ;; (add-hook 'julia-mode-hook 'julia-math-mode)
@@ -888,7 +939,11 @@ following commands are defined:
   (setq-local comint-prompt-read-only t)
   (setq-local font-lock-defaults '(julia-font-lock-keywords t))
   (setq-local paragraph-start julia-prompt-regexp)
-  (setq-local indent-line-function #'julia-indent-line))
+  (setq-local indent-line-function #'julia-indent-line)
+  (add-hook 'completion-at-point-functions
+            #'julia-mode-latexsub-completion-at-point-before nil t)
+  (add-hook 'completion-at-point-functions
+            #'julia-mode-latexsub-completion-at-point-around nil t))
 
 (add-hook 'inferior-julia-mode-hook #'inferior-julia--initialize)
 
