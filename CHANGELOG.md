@@ -6,7 +6,9 @@
 
 - load LaTeX substitution table as a feature ([#93](https://github.com/JuliaEditorSupport/julia-emacs/pull/93))
 
-- drop support for Emacs 23, use `cl-lib` ([#87](https://github.com/JuliaEditorSupport/julia-emacs/pull/87)), reorganize test framework accordingly ([#95](https://github.com/JuliaEditorSupport/julia-emacs/pull/95))
+- drop support for Emacs earlier than 24.3, use `cl-lib` ([#87](https://github.com/JuliaEditorSupport/julia-emacs/pull/87)), reorganize test framework accordingly ([#95](https://github.com/JuliaEditorSupport/julia-emacs/pull/95))
+
+- remove `latexsub` alias for `julia-latexsub` [#101](https://github.com/JuliaEditorSupport/julia-emacs/pull/101)
 
 # 0.3
 

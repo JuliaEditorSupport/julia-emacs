@@ -65,11 +65,6 @@
 ;;;###autoload
 (add-to-list 'auto-mode-alist '("\\.jl\\'" . julia-mode))
 
-;; define ignore-errors macro if it isn't present
-;; (necessary for emacs 22 compatibility)
-(when (not (fboundp 'ignore-errors))
-  (defmacro ignore-errors (body) `(condition-case nil ,body (error nil))))
-
 (defvar julia-mode-syntax-table
   (let ((table (make-syntax-table)))
     (modify-syntax-entry ?_ "_" table)
@@ -282,8 +277,7 @@
      "AbstractRange" "OrdinalRange" "StepRange" "UnitRange" "FloatRange"
      "Tuple" "NTuple" "Vararg"
      "DataType" "Symbol" "Function" "Vector" "Matrix" "Union" "Type" "Any" "Complex" "AbstractString" "Ptr" "Nothing" "Exception" "Task" "Signed" "Unsigned" "AbstractDict" "Dict" "IO" "IOStream" "Rational" "Regex" "RegexMatch" "Set" "BitSet" "Expr" "WeakRef" "ObjectIdDict"
-     "AbstractRNG" "MersenneTwister"
-     )
+     "AbstractRNG" "MersenneTwister")
    'symbols))
 
 (defconst julia-quoted-symbol-regex
@@ -315,8 +309,7 @@
    (list julia-type-annotation-regex 1 'font-lock-type-face)
    ;;(list julia-type-parameter-regex 1 'font-lock-type-face)
    (list julia-subtype-regex 1 'font-lock-type-face)
-   (list julia-builtin-regex 1 'font-lock-builtin-face)
-   ))
+   (list julia-builtin-regex 1 'font-lock-builtin-face)))
 
 (defconst julia-block-start-keywords
   (list "if" "while" "for" "begin" "try" "function" "let" "macro"
@@ -806,16 +799,12 @@ strings."
               (goto-char orig-pt))))
       (goto-char orig-pt))))
 
-(defalias 'latexsub 'julia-latexsub)
-
 (defun julia-latexsub-or-indent (arg)
   "Either indent according to mode or perform a LaTeX-like symbol substution"
   (interactive "*i")
-  (if (latexsub)
+  (if (julia-latexsub)
       (indent-for-tab-command arg)))
 (define-key julia-mode-map (kbd "TAB") 'julia-latexsub-or-indent)
-
-(defalias 'latexsub-or-indent 'julia-latexsub-or-indent)
 
 ;; Math insertion in julia. Use it with
 ;; (add-hook 'julia-mode-hook 'julia-math-mode)
@@ -868,7 +857,7 @@ following commands are defined:
 
 ;;;###autoload
 (defun inferior-julia ()
-    "Run an inferior instance of `julia' inside Emacs."
+    "Run an inferior instance of julia inside Emacs."
     (interactive)
     (let ((julia-program julia-program))
       (when (not (comint-check-proc "*Julia*"))
@@ -896,7 +885,7 @@ following commands are defined:
 
 ;;;###autoload
 (defalias 'run-julia #'inferior-julia
-  "Run an inferior instance of `julia' inside Emacs.")
+  "Run an inferior instance of julia inside Emacs.")
 
 (provide 'julia-mode)
 
