@@ -1,9 +1,10 @@
 ;;; julia-mode.el --- Major mode for editing Julia source code -*- lexical-binding: t -*-
 
-;; Copyright (C) 2009-2014 Julia contributors
-;; URL: https://github.com/JuliaLang/julia
+;; Copyright (C) 2009-2014 Julia contributors, 2015-2020 julia-mode contributors
+;; URL: https://github.com/JuliaEditorSupport/julia-emacs
 ;; Version: 0.4
 ;; Keywords: languages
+;; Package-Requires: ((emacs "24.3"))
 
 ;;; Usage:
 ;; Put the following code in your .emacs, site-load.el, or other relevant file
