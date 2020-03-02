@@ -69,19 +69,6 @@
 (when (not (fboundp 'ignore-errors))
   (defmacro ignore-errors (body) `(condition-case nil ,body (error nil))))
 
-(defun julia--regexp-opt (strings &optional paren)
-  "Emacs 23 provides `regexp-opt', but it does not support PAREN taking the value 'symbols.
-This function provides equivalent functionality, but makes no efforts to optimise the regexp."
-  (cond
-   ((>= emacs-major-version 24)
-    (regexp-opt strings paren))
-   ((not (eq paren 'symbols))
-    (regexp-opt strings paren))
-   ((null strings)
-    "")
-   ('t
-    (rx-to-string `(seq symbol-start (or ,@strings) symbol-end)))))
-
 (defvar julia-mode-syntax-table
   (let ((table (make-syntax-table)))
     (modify-syntax-entry ?_ "_" table)
@@ -259,7 +246,7 @@ This function provides equivalent functionality, but makes no efforts to optimis
   (rx symbol-start (group "@" (1+ (or word (syntax symbol))))))
 
 (defconst julia-keyword-regex
-  (julia--regexp-opt
+  (regexp-opt
    '("if" "else" "elseif" "while" "for" "begin" "end" "quote"
      "try" "catch" "return" "local" "function" "macro" "ccall"
      "finally" "break" "continue" "global" "where"
@@ -271,13 +258,13 @@ This function provides equivalent functionality, but makes no efforts to optimis
    'symbols))
 
 (defconst julia-builtin-regex
-  (julia--regexp-opt
+  (regexp-opt
    ;;'("error" "throw")
    '()
    'symbols))
 
 (defconst julia-builtin-types-regex
-  (julia--regexp-opt
+  (regexp-opt
    '("Number" "Real" "BigInt" "Integer"
      "UInt" "UInt8" "UInt16" "UInt32" "UInt64" "UInt128"
      "Int" "Int8" "Int16" "Int32" "Int64" "Int128"
@@ -315,7 +302,7 @@ This function provides equivalent functionality, but makes no efforts to optimis
    (cons julia-keyword-regex 'font-lock-keyword-face)
    (cons julia-macro-regex ''julia-macro-face)
    (cons
-    (julia--regexp-opt
+    (regexp-opt
      '("true" "false" "C_NULL" "Inf" "NaN" "Inf32" "NaN32" "nothing" "undef")
      'symbols)
     'font-lock-constant-face)
