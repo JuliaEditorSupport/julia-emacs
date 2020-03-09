@@ -57,7 +57,7 @@
   :group 'julia-mode)
 
 (defface julia-quoted-symbol-face
-  '((t :inherit font-lock-preprocessor-face))
+  '((t :inherit font-lock-constant-face))
   "Face for quoted Julia symbols, e.g. :foo."
   :group 'julia-mode)
 
