@@ -243,7 +243,7 @@
    '("if" "else" "elseif" "while" "for" "begin" "end" "quote"
      "try" "catch" "return" "local" "function" "macro" "ccall"
      "finally" "break" "continue" "global" "where"
-     "module" "using" "import" "export" "const" "let" "do" "in"
+     "module" "using" "import" "export" "const" "let" "do"
      "baremodule"
      ;; "importall" ;; deprecated in 0.7
      ;; "immutable" "type" "bitstype" "abstract" "typealias" ;; removed in 1.0
