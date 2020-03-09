@@ -199,6 +199,12 @@
   "for +.*[^
 ].* \\(in\\|∈\\)\\(\\s-\\|$\\)+")
 
+(defconst julia-ternary-regex
+  " +\\(\\?\\)[
+ ]+[^
+]* +\\(:\\)[
+ ]+")
+
 (defconst julia-function-regex
   (rx line-start (* (or space "@inline" "@noinline")) symbol-start
       "function"
@@ -272,6 +278,7 @@
     'font-lock-constant-face)
    (list julia-unquote-regex 2 'font-lock-constant-face)
    (list julia-forloop-in-regex 1 'font-lock-keyword-face)
+   (list julia-ternary-regex (list 1 'font-lock-keyword-face) (list 2 'font-lock-keyword-face))
    (list julia-function-regex 1 'font-lock-function-name-face)
    (list julia-function-assignment-regex 1 'font-lock-function-name-face)
    (list julia-type-regex 1 'font-lock-type-face)

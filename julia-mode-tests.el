@@ -465,6 +465,15 @@ end")
       (julia--should-font-lock string pos font-lock-string-face))
     (julia--should-font-lock string (length string) font-lock-keyword-face)))
 
+(ert-deftest julia--test-ternary-font-lock ()
+  "? and : in ternary expression font-locked as keywords"
+  (let ((string "true ? 1 : 2"))
+    (julia--should-font-lock string 6 font-lock-keyword-face)
+    (julia--should-font-lock string 10 font-lock-keyword-face))
+  (let ((string "true ?\n    1 :\n    2"))
+    (julia--should-font-lock string 6 font-lock-keyword-face)
+    (julia--should-font-lock string 14 font-lock-keyword-face)))
+
 ;;; Movement
 (ert-deftest julia--test-beginning-of-defun-assn-1 ()
   "Point moves to beginning of single-line assignment function."
