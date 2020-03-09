@@ -267,7 +267,7 @@
    (cons julia-macro-regex ''julia-macro-face)
    (cons
     (regexp-opt
-     '("true" "false" "C_NULL" "Inf" "NaN" "Inf32" "NaN32" "nothing" "undef")
+     '("true" "false" "C_NULL" "Inf" "NaN" "Inf32" "NaN32" "nothing" "undef" "missing")
      'symbols)
     'font-lock-constant-face)
    (list julia-unquote-regex 2 'font-lock-constant-face)
