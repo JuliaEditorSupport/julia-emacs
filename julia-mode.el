@@ -287,13 +287,13 @@
 
 (defconst julia-block-start-keywords
   (list "if" "while" "for" "begin" "try" "function" "let" "macro"
-        "quote" "do" "module"
+        "quote" "do" "module" "baremodule"
         ;; "immutable" "type" ;; remove after 0.6
         "abstract type" "primitive type" "struct" "mutable struct"))
 
 ;; For keywords that begin a block without additional indentation
 (defconst julia-block-start-keywords-no-indent
-  (list "module"))
+  (list "module" "baremodule"))
 
 (defconst julia-block-end-keywords
   (list "end" "else" "elseif" "catch" "finally"))
