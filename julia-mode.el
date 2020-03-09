@@ -205,6 +205,7 @@
 ]* +\\(:\\)[
  ]+")
 
+;; functions of form "function f(x) nothing end"
 (defconst julia-function-regex
   (rx line-start (* (or space "@inline" "@noinline")) symbol-start
       "function"
@@ -214,11 +215,11 @@
       ;; The function name itself
       (group (1+ (or word (syntax symbol))))))
 
+;; functions of form "f(x) = nothing"
 (defconst julia-function-assignment-regex
   (rx line-start (* (or space "@inline" "@noinline")) symbol-start
       (* (seq (1+ (or word (syntax symbol))) ".")) ; module name
       (group (1+ (or word (syntax symbol))))
-      (? "{" (* (not (any "}"))) "}")
       "(" (* (or
               (seq "(" (* (not (any "(" ")"))) ")")
               (not (any "(" ")"))))
