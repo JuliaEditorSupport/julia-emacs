@@ -250,12 +250,6 @@
      "abstract type" "primitive type" "struct" "mutable struct")
    'symbols))
 
-(defconst julia-builtin-regex
-  (regexp-opt
-   ;;'("error" "throw")
-   '()
-   'symbols))
-
 (defconst julia-quoted-symbol-regex
   ;; :foo and :foo2 are valid, but :123 is not.
   (rx (or bol whitespace "(" "[" "," "=")
@@ -282,8 +276,7 @@
    (list julia-function-assignment-regex 1 'font-lock-function-name-face)
    (list julia-type-regex 1 'font-lock-type-face)
    (list julia-type-annotation-regex 1 'font-lock-type-face)
-   (list julia-subtype-regex 1 'font-lock-type-face)
-   (list julia-builtin-regex 1 'font-lock-builtin-face)))
+   (list julia-subtype-regex 1 'font-lock-type-face)))
 
 (defconst julia-block-start-keywords
   (list "if" "while" "for" "begin" "try" "function" "let" "macro"
