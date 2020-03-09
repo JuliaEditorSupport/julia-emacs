@@ -1,9 +1,10 @@
 ;;; julia-mode.el --- Major mode for editing Julia source code -*- lexical-binding: t -*-
 
-;; Copyright (C) 2009-2014 Julia contributors
-;; URL: https://github.com/JuliaLang/julia
+;; Copyright (C) 2009-2014 Julia contributors, 2015-2020 julia-mode contributors
+;; URL: https://github.com/JuliaEditorSupport/julia-emacs
 ;; Version: 0.4
 ;; Keywords: languages
+;; Package-Requires: ((emacs "24.3"))
 
 ;;; Usage:
 ;; Put the following code in your .emacs, site-load.el, or other relevant file
@@ -63,24 +64,6 @@
 
 ;;;###autoload
 (add-to-list 'auto-mode-alist '("\\.jl\\'" . julia-mode))
-
-;; define ignore-errors macro if it isn't present
-;; (necessary for emacs 22 compatibility)
-(when (not (fboundp 'ignore-errors))
-  (defmacro ignore-errors (body) `(condition-case nil ,body (error nil))))
-
-(defun julia--regexp-opt (strings &optional paren)
-  "Emacs 23 provides `regexp-opt', but it does not support PAREN taking the value 'symbols.
-This function provides equivalent functionality, but makes no efforts to optimise the regexp."
-  (cond
-   ((>= emacs-major-version 24)
-    (regexp-opt strings paren))
-   ((not (eq paren 'symbols))
-    (regexp-opt strings paren))
-   ((null strings)
-    "")
-   ('t
-    (rx-to-string `(seq symbol-start (or ,@strings) symbol-end)))))
 
 (defvar julia-mode-syntax-table
   (let ((table (make-syntax-table)))
@@ -259,7 +242,7 @@ This function provides equivalent functionality, but makes no efforts to optimis
   (rx symbol-start (group "@" (1+ (or word (syntax symbol))))))
 
 (defconst julia-keyword-regex
-  (julia--regexp-opt
+  (regexp-opt
    '("if" "else" "elseif" "while" "for" "begin" "end" "quote"
      "try" "catch" "return" "local" "function" "macro" "ccall"
      "finally" "break" "continue" "global" "where"
@@ -271,13 +254,13 @@ This function provides equivalent functionality, but makes no efforts to optimis
    'symbols))
 
 (defconst julia-builtin-regex
-  (julia--regexp-opt
+  (regexp-opt
    ;;'("error" "throw")
    '()
    'symbols))
 
 (defconst julia-builtin-types-regex
-  (julia--regexp-opt
+  (regexp-opt
    '("Number" "Real" "BigInt" "Integer"
      "UInt" "UInt8" "UInt16" "UInt32" "UInt64" "UInt128"
      "Int" "Int8" "Int16" "Int32" "Int64" "Int128"
@@ -294,8 +277,7 @@ This function provides equivalent functionality, but makes no efforts to optimis
      "AbstractRange" "OrdinalRange" "StepRange" "UnitRange" "FloatRange"
      "Tuple" "NTuple" "Vararg"
      "DataType" "Symbol" "Function" "Vector" "Matrix" "Union" "Type" "Any" "Complex" "AbstractString" "Ptr" "Nothing" "Exception" "Task" "Signed" "Unsigned" "AbstractDict" "Dict" "IO" "IOStream" "Rational" "Regex" "RegexMatch" "Set" "BitSet" "Expr" "WeakRef" "ObjectIdDict"
-     "AbstractRNG" "MersenneTwister"
-     )
+     "AbstractRNG" "MersenneTwister")
    'symbols))
 
 (defconst julia-quoted-symbol-regex
@@ -315,7 +297,7 @@ This function provides equivalent functionality, but makes no efforts to optimis
    (cons julia-keyword-regex 'font-lock-keyword-face)
    (cons julia-macro-regex ''julia-macro-face)
    (cons
-    (julia--regexp-opt
+    (regexp-opt
      '("true" "false" "C_NULL" "Inf" "NaN" "Inf32" "NaN32" "nothing" "undef")
      'symbols)
     'font-lock-constant-face)
@@ -327,8 +309,7 @@ This function provides equivalent functionality, but makes no efforts to optimis
    (list julia-type-annotation-regex 1 'font-lock-type-face)
    ;;(list julia-type-parameter-regex 1 'font-lock-type-face)
    (list julia-subtype-regex 1 'font-lock-type-face)
-   (list julia-builtin-regex 1 'font-lock-builtin-face)
-   ))
+   (list julia-builtin-regex 1 'font-lock-builtin-face)))
 
 (defconst julia-block-start-keywords
   (list "if" "while" "for" "begin" "try" "function" "let" "macro"
@@ -818,16 +799,12 @@ strings."
               (goto-char orig-pt))))
       (goto-char orig-pt))))
 
-(defalias 'latexsub 'julia-latexsub)
-
 (defun julia-latexsub-or-indent (arg)
   "Either indent according to mode or perform a LaTeX-like symbol substution"
   (interactive "*i")
-  (if (latexsub)
+  (if (julia-latexsub)
       (indent-for-tab-command arg)))
 (define-key julia-mode-map (kbd "TAB") 'julia-latexsub-or-indent)
-
-(defalias 'latexsub-or-indent 'julia-latexsub-or-indent)
 
 ;; Math insertion in julia. Use it with
 ;; (add-hook 'julia-mode-hook 'julia-math-mode)
@@ -880,7 +857,7 @@ following commands are defined:
 
 ;;;###autoload
 (defun inferior-julia ()
-    "Run an inferior instance of `julia' inside Emacs."
+    "Run an inferior instance of julia inside Emacs."
     (interactive)
     (let ((julia-program julia-program))
       (when (not (comint-check-proc "*Julia*"))
@@ -908,7 +885,7 @@ following commands are defined:
 
 ;;;###autoload
 (defalias 'run-julia #'inferior-julia
-  "Run an inferior instance of `julia' inside Emacs.")
+  "Run an inferior instance of julia inside Emacs.")
 
 (provide 'julia-mode)
 
