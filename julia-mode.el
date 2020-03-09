@@ -256,27 +256,6 @@
    '()
    'symbols))
 
-(defconst julia-builtin-types-regex
-  (regexp-opt
-   '("Number" "Real" "BigInt" "Integer"
-     "UInt" "UInt8" "UInt16" "UInt32" "UInt64" "UInt128"
-     "Int" "Int8" "Int16" "Int32" "Int64" "Int128"
-     "BigFloat" "AbstractFloat" "Float16" "Float32" "Float64"
-     ;;"Complex128" "Complex64" ;; replaced in 1.0
-     "ComplexF32" "ComplexF64"
-     "Bool"
-     "Cuchar" "Cshort" "Cushort" "Cint" "Cuint" "Clonglong" "Culonglong" "Cintmax_t" "Cuintmax_t"
-     "Cfloat" "Cdouble" "Cptrdiff_t" "Cssize_t" "Csize_t"
-     "Cchar" "Clong" "Culong" "Cwchar_t" "Cvoid"
-     "Cstring" "Cwstring" ;; C strings made of ordinary and wide characters
-     "Char" "String" "SubString"
-     "Array" "DArray" "AbstractArray" "AbstractVector" "AbstractMatrix" "AbstractSparseMatrix" "SubArray" "StridedArray" "StridedVector" "StridedMatrix" "VecOrMat" "StridedVecOrMat" "DenseArray" "SparseMatrixCSC" "BitArray"
-     "AbstractRange" "OrdinalRange" "StepRange" "UnitRange" "FloatRange"
-     "Tuple" "NTuple" "Vararg"
-     "DataType" "Symbol" "Function" "Vector" "Matrix" "Union" "Type" "Any" "Complex" "AbstractString" "Ptr" "Nothing" "Exception" "Task" "Signed" "Unsigned" "AbstractDict" "Dict" "IO" "IOStream" "Rational" "Regex" "RegexMatch" "Set" "BitSet" "Expr" "WeakRef" "ObjectIdDict"
-     "AbstractRNG" "MersenneTwister")
-   'symbols))
-
 (defconst julia-quoted-symbol-regex
   ;; :foo and :foo2 are valid, but :123 is not.
   (rx (or bol whitespace "(" "[" "," "=")
@@ -290,7 +269,6 @@
    ;; Highlight quoted symbols before keywords, so :function is not
    ;; highlighted as a keyword.
    (list julia-quoted-symbol-regex 1 ''julia-quoted-symbol-face)
-   (cons julia-builtin-types-regex 'font-lock-type-face)
    (cons julia-keyword-regex 'font-lock-keyword-face)
    (cons julia-macro-regex ''julia-macro-face)
    (cons
