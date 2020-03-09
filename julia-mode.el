@@ -232,9 +232,6 @@
 (defconst julia-type-annotation-regex
   (rx "::" (0+ space) (group (1+ (or word (syntax symbol))))))
 
-;;(defconst julia-type-parameter-regex
-;;  (rx symbol-start (1+ (or (or word (syntax symbol)) ?_)) "{" (group (1+ (or (or word (syntax symbol)) ?_))) "}"))
-
 (defconst julia-subtype-regex
   (rx "<:" (0+ space) (group (1+ (or word (syntax symbol)))) (0+ space) (or "\n" "{" "}" "end")))
 
@@ -307,7 +304,6 @@
    (list julia-function-assignment-regex 1 'font-lock-function-name-face)
    (list julia-type-regex 1 'font-lock-type-face)
    (list julia-type-annotation-regex 1 'font-lock-type-face)
-   ;;(list julia-type-parameter-regex 1 'font-lock-type-face)
    (list julia-subtype-regex 1 'font-lock-type-face)
    (list julia-builtin-regex 1 'font-lock-builtin-face)))
 
