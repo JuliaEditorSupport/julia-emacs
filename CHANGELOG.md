@@ -12,6 +12,10 @@
 
 - remove `latexsub` alias for `julia-latexsub` [#101](https://github.com/JuliaEditorSupport/julia-emacs/pull/101)
 
+- correctly font-lock for-loops and ternary expressions as keywords [#102](https://github.com/JuliaEditorSupport/julia-emacs/pull/102)
+
+- use font-lock-constant-face instead of font-lock-preprocessor-face for quoted symbols [#102](https://github.com/JuliaEditorSupport/julia-emacs/pull/102)
+
 # 0.3
 
 This is the first actual release, and the last one to support Emacs 23.

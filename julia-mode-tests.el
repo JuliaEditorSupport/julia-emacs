@@ -465,6 +465,33 @@ end")
       (julia--should-font-lock string pos font-lock-string-face))
     (julia--should-font-lock string (length string) font-lock-keyword-face)))
 
+(ert-deftest julia--test-ternary-font-lock ()
+  "? and : in ternary expression font-locked as keywords"
+  (let ((string "true ? 1 : 2"))
+    (julia--should-font-lock string 6 font-lock-keyword-face)
+    (julia--should-font-lock string 10 font-lock-keyword-face))
+  (let ((string "true ?\n    1 :\n    2"))
+    (julia--should-font-lock string 6 font-lock-keyword-face)
+    (julia--should-font-lock string 14 font-lock-keyword-face)))
+
+(ert-deftest julia--test-forloop-font-lock ()
+  "for and in/=/∈ font-locked as keywords in loops and comprehensions"
+  (let ((string "for i=1:10\nprintln(i)\nend"))
+    (julia--should-font-lock string 1 font-lock-keyword-face)
+    (julia--should-font-lock string 6 font-lock-keyword-face))
+  (let ((string "for i in 1:10\nprintln(i)\nend"))
+    (julia--should-font-lock string 3 font-lock-keyword-face)
+    (julia--should-font-lock string 7 font-lock-keyword-face))
+  (let ((string "for i∈1:10\nprintln(i)\nend"))
+    (julia--should-font-lock string 2 font-lock-keyword-face)
+    (julia--should-font-lock string 6 font-lock-keyword-face))
+  (let ((string "[i for i in 1:10]"))
+    (julia--should-font-lock string 4 font-lock-keyword-face)
+    (julia--should-font-lock string 10 font-lock-keyword-face))
+  (let ((string "(i for i in 1:10)"))
+    (julia--should-font-lock string 4 font-lock-keyword-face)
+    (julia--should-font-lock string 10 font-lock-keyword-face)))
+
 ;;; Movement
 (ert-deftest julia--test-beginning-of-defun-assn-1 ()
   "Point moves to beginning of single-line assignment function."

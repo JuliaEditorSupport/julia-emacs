@@ -57,7 +57,7 @@
   :group 'julia-mode)
 
 (defface julia-quoted-symbol-face
-  '((t :inherit font-lock-preprocessor-face))
+  '((t :inherit font-lock-constant-face))
   "Face for quoted Julia symbols, e.g. :foo."
   :group 'julia-mode)
 
@@ -197,8 +197,19 @@
 
 (defconst julia-forloop-in-regex
   "for +.*[^
-].* \\(in\\|∈\\)\\(\\s-\\|$\\)+")
+].* \\(in\\)\\(\\s-\\|$\\)+")
 
+(defconst julia--forloop-=-regex
+  "for +.*[^
+].*\\(=\\|∈\\)")
+
+(defconst julia-ternary-regex
+  " +\\(\\?\\)[
+ ]+[^
+]* +\\(:\\)[
+ ]+")
+
+;; functions of form "function f(x) nothing end"
 (defconst julia-function-regex
   (rx line-start (* (or space "@inline" "@noinline")) symbol-start
       "function"
@@ -208,11 +219,11 @@
       ;; The function name itself
       (group (1+ (or word (syntax symbol))))))
 
+;; functions of form "f(x) = nothing"
 (defconst julia-function-assignment-regex
   (rx line-start (* (or space "@inline" "@noinline")) symbol-start
       (* (seq (1+ (or word (syntax symbol))) ".")) ; module name
       (group (1+ (or word (syntax symbol))))
-      (? "{" (* (not (any "}"))) "}")
       "(" (* (or
               (seq "(" (* (not (any "(" ")"))) ")")
               (not (any "(" ")"))))
@@ -232,9 +243,6 @@
 (defconst julia-type-annotation-regex
   (rx "::" (0+ space) (group (1+ (or word (syntax symbol))))))
 
-;;(defconst julia-type-parameter-regex
-;;  (rx symbol-start (1+ (or (or word (syntax symbol)) ?_)) "{" (group (1+ (or (or word (syntax symbol)) ?_))) "}"))
-
 (defconst julia-subtype-regex
   (rx "<:" (0+ space) (group (1+ (or word (syntax symbol)))) (0+ space) (or "\n" "{" "}" "end")))
 
@@ -246,38 +254,11 @@
    '("if" "else" "elseif" "while" "for" "begin" "end" "quote"
      "try" "catch" "return" "local" "function" "macro" "ccall"
      "finally" "break" "continue" "global" "where"
-     "module" "using" "import" "export" "const" "let" "do" "in"
+     "module" "using" "import" "export" "const" "let" "do"
      "baremodule"
      ;; "importall" ;; deprecated in 0.7
      ;; "immutable" "type" "bitstype" "abstract" "typealias" ;; removed in 1.0
      "abstract type" "primitive type" "struct" "mutable struct")
-   'symbols))
-
-(defconst julia-builtin-regex
-  (regexp-opt
-   ;;'("error" "throw")
-   '()
-   'symbols))
-
-(defconst julia-builtin-types-regex
-  (regexp-opt
-   '("Number" "Real" "BigInt" "Integer"
-     "UInt" "UInt8" "UInt16" "UInt32" "UInt64" "UInt128"
-     "Int" "Int8" "Int16" "Int32" "Int64" "Int128"
-     "BigFloat" "AbstractFloat" "Float16" "Float32" "Float64"
-     ;;"Complex128" "Complex64" ;; replaced in 1.0
-     "ComplexF32" "ComplexF64"
-     "Bool"
-     "Cuchar" "Cshort" "Cushort" "Cint" "Cuint" "Clonglong" "Culonglong" "Cintmax_t" "Cuintmax_t"
-     "Cfloat" "Cdouble" "Cptrdiff_t" "Cssize_t" "Csize_t"
-     "Cchar" "Clong" "Culong" "Cwchar_t" "Cvoid"
-     "Cstring" "Cwstring" ;; C strings made of ordinary and wide characters
-     "Char" "String" "SubString"
-     "Array" "DArray" "AbstractArray" "AbstractVector" "AbstractMatrix" "AbstractSparseMatrix" "SubArray" "StridedArray" "StridedVector" "StridedMatrix" "VecOrMat" "StridedVecOrMat" "DenseArray" "SparseMatrixCSC" "BitArray"
-     "AbstractRange" "OrdinalRange" "StepRange" "UnitRange" "FloatRange"
-     "Tuple" "NTuple" "Vararg"
-     "DataType" "Symbol" "Function" "Vector" "Matrix" "Union" "Type" "Any" "Complex" "AbstractString" "Ptr" "Nothing" "Exception" "Task" "Signed" "Unsigned" "AbstractDict" "Dict" "IO" "IOStream" "Rational" "Regex" "RegexMatch" "Set" "BitSet" "Expr" "WeakRef" "ObjectIdDict"
-     "AbstractRNG" "MersenneTwister")
    'symbols))
 
 (defconst julia-quoted-symbol-regex
@@ -286,6 +267,8 @@
       (group ":" (or letter (syntax symbol)) (0+ (or word (syntax symbol))))))
 
 (defconst julia-font-lock-keywords
+  ;; font-lock-builtin-face intentionally unused since any name from
+  ;; names(Base) can be aliased in a baremodule.
   (list
    ;; Ensure :: and <: aren't highlighted, so we don't confuse ::Foo with :foo.
    ;; (in Emacs, keywords don't overlap).
@@ -293,33 +276,34 @@
    ;; Highlight quoted symbols before keywords, so :function is not
    ;; highlighted as a keyword.
    (list julia-quoted-symbol-regex 1 ''julia-quoted-symbol-face)
-   (cons julia-builtin-types-regex 'font-lock-type-face)
    (cons julia-keyword-regex 'font-lock-keyword-face)
    (cons julia-macro-regex ''julia-macro-face)
    (cons
     (regexp-opt
-     '("true" "false" "C_NULL" "Inf" "NaN" "Inf32" "NaN32" "nothing" "undef")
+     '("true" "false" "C_NULL" "Inf" "NaN" "Inf32" "NaN32" "nothing" "undef" "missing")
      'symbols)
     'font-lock-constant-face)
    (list julia-unquote-regex 2 'font-lock-constant-face)
    (list julia-forloop-in-regex 1 'font-lock-keyword-face)
+   (list julia--forloop-=-regex 1 'font-lock-keyword-face)
+   (list julia-ternary-regex (list 1 'font-lock-keyword-face) (list 2 'font-lock-keyword-face))
    (list julia-function-regex 1 'font-lock-function-name-face)
    (list julia-function-assignment-regex 1 'font-lock-function-name-face)
    (list julia-type-regex 1 'font-lock-type-face)
+   ;; font-lock-type-face is for the point of type definition rather
+   ;; than usage, but using for type annotations is an acceptable pun.
    (list julia-type-annotation-regex 1 'font-lock-type-face)
-   ;;(list julia-type-parameter-regex 1 'font-lock-type-face)
-   (list julia-subtype-regex 1 'font-lock-type-face)
-   (list julia-builtin-regex 1 'font-lock-builtin-face)))
+   (list julia-subtype-regex 1 'font-lock-type-face)))
 
 (defconst julia-block-start-keywords
   (list "if" "while" "for" "begin" "try" "function" "let" "macro"
-        "quote" "do" "module"
+        "quote" "do" "module" "baremodule"
         ;; "immutable" "type" ;; remove after 0.6
         "abstract type" "primitive type" "struct" "mutable struct"))
 
 ;; For keywords that begin a block without additional indentation
 (defconst julia-block-start-keywords-no-indent
-  (list "module"))
+  (list "module" "baremodule"))
 
 (defconst julia-block-end-keywords
   (list "end" "else" "elseif" "catch" "finally"))
@@ -760,14 +744,13 @@ Return nil if point is not in a function, otherwise point."
 (define-derived-mode julia-mode prog-mode "Julia"
   "Major mode for editing julia code."
   (set-syntax-table julia-mode-syntax-table)
-  (set (make-local-variable 'comment-start) "# ")
-  (set (make-local-variable 'comment-start-skip) "#+\\s-*")
-  (set (make-local-variable 'font-lock-defaults) '(julia-font-lock-keywords))
-  (set (make-local-variable 'syntax-propertize-function)
-       julia-syntax-propertize-function)
-  (set (make-local-variable 'indent-line-function) 'julia-indent-line)
-  (set (make-local-variable 'beginning-of-defun-function) #'julia-beginning-of-defun)
-  (set (make-local-variable 'end-of-defun-function) #'julia-end-of-defun)
+  (setq-local comment-start "# ")
+  (setq-local comment-start-skip "#+\\s-*")
+  (setq-local font-lock-defaults '(julia-font-lock-keywords))
+  (setq-local syntax-propertize-function julia-syntax-propertize-function)
+  (setq-local indent-line-function #'julia-indent-line)
+  (setq-local beginning-of-defun-function #'julia-beginning-of-defun)
+  (setq-local end-of-defun-function #'julia-end-of-defun)
   (setq indent-tabs-mode nil)
   (setq imenu-generic-expression julia-imenu-generic-expression)
   (imenu-add-to-menubar "Imenu"))
@@ -829,8 +812,7 @@ following commands are defined:
 \\{LaTeX-math-mode-map}"
       nil nil (list (cons (LaTeX-math-abbrev-prefix) LaTeX-math-keymap))
       (if julia-math-mode
-          (set (make-local-variable 'LaTeX-math-insert-function)
-               'julia-math-insert)))))
+          (setq-local LaTeX-math-insert-function #'julia-math-insert)))))
 
 ;; Code for `inferior-julia-mode'
 (require 'comint)
@@ -875,13 +857,13 @@ following commands are defined:
 
 \\<inferior-julia-mode-map>"
   nil "Julia"
-  (setq comint-prompt-regexp julia-prompt-regexp)
-  (setq comint-prompt-read-only t)
-  (set (make-local-variable 'font-lock-defaults) '(julia-font-lock-keywords t))
-  (set (make-local-variable 'paragraph-start) julia-prompt-regexp)
-  (set (make-local-variable 'indent-line-function) 'julia-indent-line))
+  (setq-local comint-prompt-regexp julia-prompt-regexp)
+  (setq-local comint-prompt-read-only t)
+  (setq-local font-lock-defaults '(julia-font-lock-keywords t))
+  (setq-local paragraph-start julia-prompt-regexp)
+  (setq-local indent-line-function #'julia-indent-line))
 
-(add-hook 'inferior-julia-mode-hook 'inferior-julia--initialize)
+(add-hook 'inferior-julia-mode-hook #'inferior-julia--initialize)
 
 ;;;###autoload
 (defalias 'run-julia #'inferior-julia
