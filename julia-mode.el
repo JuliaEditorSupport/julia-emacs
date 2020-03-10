@@ -749,6 +749,7 @@ Return nil if point is not in a function, otherwise point."
 (define-derived-mode julia-mode prog-mode "Julia"
   "Major mode for editing julia code."
   (set-syntax-table julia-mode-syntax-table)
+  (setq-local comment-use-syntax t)
   (setq-local comment-start "# ")
   (setq-local comment-start-skip "#+\\s-*")
   (setq-local font-lock-defaults '(julia-font-lock-keywords))
@@ -818,61 +819,6 @@ following commands are defined:
       nil nil (list (cons (LaTeX-math-abbrev-prefix) LaTeX-math-keymap))
       (if julia-math-mode
           (setq-local LaTeX-math-insert-function #'julia-math-insert)))))
-
-;; Code for `inferior-julia-mode'
-(require 'comint)
-
-(defcustom julia-program "julia"
-  "Path to the program used by `inferior-julia'."
-  :type 'string
-  :group 'julia)
-
-(defcustom julia-arguments '("-i" "--color=yes")
-  "Commandline arguments to pass to `julia-program'."
-  :type '(repeat (string :tag "argument"))
-  :group 'julia)
-
-(defvar julia-prompt-regexp "^\\w*> "
-  "Regexp for matching `inferior-julia' prompt.")
-
-(defvar inferior-julia-mode-map
-  (let ((map2 (nconc (make-sparse-keymap) comint-mode-map)))
-    ;; example definition
-    (define-key map2 (kbd "TAB") 'julia-latexsub-or-indent)
-    map2)
-  "Basic mode map for `inferior-julia-mode'.")
-
-;;;###autoload
-(defun inferior-julia ()
-    "Run an inferior instance of julia inside Emacs."
-    (interactive)
-    (let ((julia-program julia-program))
-      (when (not (comint-check-proc "*Julia*"))
-        (apply #'make-comint-in-buffer "Julia" "*Julia*"
-               julia-program nil julia-arguments))
-      (pop-to-buffer-same-window "*Julia*")
-      (inferior-julia-mode)))
-
-(defun inferior-julia--initialize ()
-    "Helper function to initialize `inferior-julia'."
-    (setq comint-use-prompt-regexp t))
-
-(define-derived-mode inferior-julia-mode comint-mode "Julia"
-  "Major mode for `inferior-julia'.
-
-\\<inferior-julia-mode-map>"
-  nil "Julia"
-  (setq-local comint-prompt-regexp julia-prompt-regexp)
-  (setq-local comint-prompt-read-only t)
-  (setq-local font-lock-defaults '(julia-font-lock-keywords t))
-  (setq-local paragraph-start julia-prompt-regexp)
-  (setq-local indent-line-function #'julia-indent-line))
-
-(add-hook 'inferior-julia-mode-hook #'inferior-julia--initialize)
-
-;;;###autoload
-(defalias 'run-julia #'inferior-julia
-  "Run an inferior instance of julia inside Emacs.")
 
 (provide 'julia-mode)
 
