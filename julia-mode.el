@@ -197,7 +197,11 @@
 
 (defconst julia-forloop-in-regex
   "for +.*[^
-].* \\(in\\|∈\\)\\(\\s-\\|$\\)+")
+].* \\(in\\)\\(\\s-\\|$\\)+")
+
+(defconst julia--forloop-=-regex
+  "for +.*[^
+].*\\(=\\|∈\\)")
 
 (defconst julia-ternary-regex
   " +\\(\\?\\)[
@@ -279,6 +283,7 @@
     'font-lock-constant-face)
    (list julia-unquote-regex 2 'font-lock-constant-face)
    (list julia-forloop-in-regex 1 'font-lock-keyword-face)
+   (list julia--forloop-=-regex 1 'font-lock-keyword-face)
    (list julia-ternary-regex (list 1 'font-lock-keyword-face) (list 2 'font-lock-keyword-face))
    (list julia-function-regex 1 'font-lock-function-name-face)
    (list julia-function-assignment-regex 1 'font-lock-function-name-face)
