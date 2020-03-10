@@ -267,6 +267,8 @@
       (group ":" (or letter (syntax symbol)) (0+ (or word (syntax symbol))))))
 
 (defconst julia-font-lock-keywords
+  ;; font-lock-builtin-face intentionally unused since any name from
+  ;; names(Base) can be aliased in a baremodule.
   (list
    ;; Ensure :: and <: aren't highlighted, so we don't confuse ::Foo with :foo.
    ;; (in Emacs, keywords don't overlap).
@@ -288,6 +290,8 @@
    (list julia-function-regex 1 'font-lock-function-name-face)
    (list julia-function-assignment-regex 1 'font-lock-function-name-face)
    (list julia-type-regex 1 'font-lock-type-face)
+   ;; font-lock-type-face is for the point of type definition rather
+   ;; than usage, but using for type annotations is an acceptable pun.
    (list julia-type-annotation-regex 1 'font-lock-type-face)
    (list julia-subtype-regex 1 'font-lock-type-face)))
 
@@ -744,7 +748,7 @@ Return nil if point is not in a function, otherwise point."
   (setq-local comment-start-skip "#+\\s-*")
   (setq-local font-lock-defaults '(julia-font-lock-keywords))
   (setq-local syntax-propertize-function julia-syntax-propertize-function)
-  (setq-local indent-line-function 'julia-indent-line)
+  (setq-local indent-line-function #'julia-indent-line)
   (setq-local beginning-of-defun-function #'julia-beginning-of-defun)
   (setq-local end-of-defun-function #'julia-end-of-defun)
   (setq indent-tabs-mode nil)
@@ -808,7 +812,7 @@ following commands are defined:
 \\{LaTeX-math-mode-map}"
       nil nil (list (cons (LaTeX-math-abbrev-prefix) LaTeX-math-keymap))
       (if julia-math-mode
-          (setq-local LaTeX-math-insert-function 'julia-math-insert)))))
+          (setq-local LaTeX-math-insert-function #'julia-math-insert)))))
 
 ;; Code for `inferior-julia-mode'
 (require 'comint)
@@ -857,9 +861,9 @@ following commands are defined:
   (setq-local comint-prompt-read-only t)
   (setq-local font-lock-defaults '(julia-font-lock-keywords t))
   (setq-local paragraph-start julia-prompt-regexp)
-  (setq-local indent-line-function 'julia-indent-line))
+  (setq-local indent-line-function #'julia-indent-line))
 
-(add-hook 'inferior-julia-mode-hook 'inferior-julia--initialize)
+(add-hook 'inferior-julia-mode-hook #'inferior-julia--initialize)
 
 ;;;###autoload
 (defalias 'run-julia #'inferior-julia
