@@ -200,8 +200,13 @@
 ].* \\(in\\)\\(\\s-\\|$\\)+")
 
 (defconst julia--forloop-=-regex
-  "for +.*[^
-].*\\(=\\|∈\\)")
+  (rx "for"
+      (1+ ? )
+      ;; expression can't end and no newline before = portion of forloop.
+      (1+ (not (any ?\n ?\; ?=)))
+      (group (any ?= ?∈))
+      ;; don't want to match on == expression instead of =.
+      (not (any ?=))))
 
 (defconst julia-ternary-regex
   " +\\(\\?\\)[
