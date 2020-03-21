@@ -29,7 +29,7 @@
   "Commandline arguments to pass to `inferior-julia-program'."
   :type '(repeat (string :tag "argument")))
 
-(defcustom inferior-julia-prompt-read-only comint-prompt-read-only
+(defcustom inferior-julia-prompt-read-only t
   "If non-nil, the Julia prompt is read only."
   :type 'boolean)
 
@@ -47,7 +47,7 @@
    "%s")
   "Format string to use with stacktraces with Julia Base paths.")
 
-(defvar inferior-julia-prompt-regexp "^\\w*> "
+(defvar inferior-julia-prompt-regexp "^julia> "
   "Regexp for matching `inferior-julia' prompt.")
 
 (defvar inferior-julia-error-regexp-alist
@@ -78,6 +78,57 @@
 (defvar inferior-julia-mode-syntax-table
   (make-syntax-table julia-mode-syntax-table)
   "Syntax table for use in `inferior-julia-mode' buffers.")
+
+(defun inferior-julia--eval-to-string (proc expr)
+  "Return the stdout results of evaluating EXPR in Julia process PROC."
+  (let ((original-filter (process-filter proc))
+        (expr (if (= (aref expr (1- (length expr))) ?\n)
+                  expr
+                (concat expr "\n")))
+        (receive-in-progress t)
+        output)
+    (set-process-filter
+     proc
+     (lambda (_proc string)
+       (if (string-match inferior-julia-prompt-regexp string)
+           (setq receive-in-progress nil)
+         (setq output (concat output string)))))
+    (unwind-protect
+        (progn
+          (comint-send-string proc expr)
+          (while receive-in-progress
+            (accept-process-output proc)))
+      (set-process-filter proc original-filter))
+    output))
+
+(defun inferior-julia-completion-table (proc)
+  "Return dynamic completion table using inferior-julia PROC as backend."
+  (completion-table-with-cache
+   (lambda (string)
+     (split-string
+      (inferior-julia--eval-to-string
+       proc
+       (format
+        ;; Julia code:
+        ;; ret, range, should_complete = REPL.REPLCompletions.completions(string, pos, module)
+        ;; foreach(c -> println(REPL.REPLCompletions.completion_text(c)), ret)
+        "foreach(c-> println(_InferiorJulia.REPL.REPLCompletions.completion_text(c)),
+_InferiorJulia.REPL.REPLCompletions.completions(\"%s\", %d)[1])"
+        string (string-bytes string)))
+      "\n" t))))
+
+;; TODO: this doesn't offer completion for e.g. "Pkg.s"
+(defun inferior-julia--get-capf (proc)
+  "Return function for `completion-at-point-functions' using PROC as backend."
+  (let ((table (inferior-julia-completion-table proc)))
+    (lambda ()
+      (let ((beg (save-excursion
+                   (skip-chars-backward
+                    ".[:word:]" (comint-line-beginning-position))
+                   (point)))
+            (end (point)))
+        (when (> end beg)
+          (list beg end table :exclusive 'no))))))
 
 (defun inferior-julia--send (proc string)
   "Send STRING to inferior Julia PROC.
@@ -141,7 +192,10 @@ Key bindings:
 
   (setq-local paragraph-start inferior-julia-prompt-regexp)
 
-  (setq-local comint-input-sender #'inferior-julia--send))
+  (setq-local comint-input-sender #'inferior-julia--send)
+  (add-hook 'completion-at-point-functions
+            (inferior-julia--get-capf (get-buffer-process (current-buffer)))
+            nil t))
 
 ;;;###autoload
 (defalias 'run-julia #'inferior-julia
