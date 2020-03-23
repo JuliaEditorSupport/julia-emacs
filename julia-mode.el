@@ -38,6 +38,7 @@
 
 (require 'cl-lib)
 (require 'julia-mode-latexsubs)
+(require 'project nil t)
 
 (defvar julia-mode-hook nil)
 
@@ -758,7 +759,10 @@ Return nil if point is not in a function, otherwise point."
   (setq-local end-of-defun-function #'julia-end-of-defun)
   (setq indent-tabs-mode nil)
   (setq imenu-generic-expression julia-imenu-generic-expression)
-  (imenu-add-to-menubar "Imenu"))
+  (imenu-add-to-menubar "Imenu")
+  ;; project.el integration
+  (when (featurep 'project)
+    (add-hook 'project-find-functions #'julia--project-try)))
 
 (defun julia-manual-deindent ()
   "Deindent by `julia-indent-offset' regardless of current
@@ -819,7 +823,32 @@ following commands are defined:
       (if julia-math-mode
           (setq-local LaTeX-math-insert-function #'julia-math-insert)))))
 
-;; Code for `inferior-julia-mode'
+;;; project.el integration
+
+;; project.el was added to emacs in 25.1, so we can't assume it's available
+(when (featurep 'project)
+  (cl-defmethod project-roots ((project (head julia)))
+    (list (cdr project))))
+
+(defun julia--project-try (dir)
+  "Return project instance if DIR is part of a Julia project.
+Otherwise returns nil."
+  (let* ((root1 (locate-dominating-file dir "JuliaProject.toml"))
+         (root2 (locate-dominating-file dir "Project.toml"))
+         (root
+          (cond
+           ((and root1 root2)
+            (let ((root1 (expand-file-name root1))
+                  (root2 (expand-file-name root2)))
+              ;; The longest path must be subdirectory of shorter path
+              (if (< (string-bytes root1) (string-bytes root2))
+                  root2
+                root1)))
+           (root1)
+           (root2))))
+    (when root (cons 'julia (expand-file-name root)))))
+
+;;; Code for `inferior-julia-mode'
 (require 'comint)
 
 (defcustom julia-program "julia"
