@@ -498,6 +498,14 @@ end")
     (julia--should-font-lock string 25 nil)
     (julia--should-font-lock string 26 nil)))
 
+(ert-deftest julia--test-typeparams-font-lock ()
+  (let ((string "@with_kw struct Foo{A <: AbstractThingy, B <: Tuple}\n    bar::A\n    baz::B\nend"))
+    (julia--should-font-lock string 30 font-lock-type-face) ; AbstractThingy
+    (julia--should-font-lock string 50 font-lock-type-face) ; Tuple
+    (julia--should-font-lock string 63 font-lock-type-face) ; A
+    (julia--should-font-lock string 74 font-lock-type-face) ; B
+    ))
+
 ;;; Movement
 (ert-deftest julia--test-beginning-of-defun-assn-1 ()
   "Point moves to beginning of single-line assignment function."
