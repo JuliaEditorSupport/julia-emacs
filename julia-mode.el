@@ -249,7 +249,7 @@
   (rx "::" (0+ space) (group (1+ (or word (syntax symbol))))))
 
 (defconst julia-subtype-regex
-  (rx "<:" (0+ space) (group (1+ (or word (syntax symbol)))) (0+ space) (or "\n" "{" "}" "end")))
+  (rx "<:" (0+ space) (group (1+ (or word (syntax symbol)))) (0+ space) (or "\n" "{" "}" "end" ",")))
 
 (defconst julia-macro-regex
   (rx symbol-start (group "@" (1+ (or word (syntax symbol))))))
