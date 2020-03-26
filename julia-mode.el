@@ -275,9 +275,6 @@
   ;; font-lock-builtin-face intentionally unused since any name from
   ;; names(Base) can be aliased in a baremodule.
   (list
-   ;; Ensure :: and <: aren't highlighted, so we don't confuse ::Foo with :foo.
-   ;; (in Emacs, keywords don't overlap).
-   (cons (rx (or "::" "<:")) ''default)
    ;; Highlight quoted symbols before keywords, so :function is not
    ;; highlighted as a keyword.
    (list julia-quoted-symbol-regex 1 ''julia-quoted-symbol-face)
