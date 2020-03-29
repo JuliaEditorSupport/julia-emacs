@@ -262,7 +262,14 @@ qux"
 foo() |>
     bar |>
     baz
-qux"))
+qux")
+  (julia--should-indent
+   "x \\
+y \\
+z"
+   "x \\
+    y \\
+    z"))
 
 (ert-deftest julia--test-indent-ignores-blank-lines ()
   "Blank lines should not affect indentation of non-blank lines."
@@ -396,13 +403,13 @@ end"))
 (ert-deftest julia--test-backslash-indent ()
   "indentation for function(args...)"
   (julia--should-indent
-   "(\)
+   "(\\)
    1
-   (:\)
+   (:\\)
        1"
-   "(\)
+   "(\\)
 1
-(:\)
+(:\\)
 1"))
 
 (ert-deftest julia--test-indent-keyword-paren ()
