@@ -85,6 +85,9 @@
     (modify-syntax-entry ?'  "." table)
     (modify-syntax-entry ?\" "\"" table)
     (modify-syntax-entry ?` "\"" table)
+    ;; Backslash has escape syntax for use in strings but
+    ;; julia-syntax-propertize-function sets punctuation syntax on it
+    ;; outside strings.
     (modify-syntax-entry ?\\ "\\" table)
 
     (modify-syntax-entry ?. "." table)
@@ -305,13 +308,13 @@
   (syntax-propertize-rules
    ;; triple-quoted strings are a single string rather than 3
    ((rx (group ?\") ?\" (group ?\"))
+    ;; First " starts a string if not already inside a string (or comment)
     (1 (let ((ppss (save-excursion (syntax-ppss (match-beginning 0)))))
          (unless (or (nth 3 ppss) (nth 4 ppss))
            (string-to-syntax "|"))))
-    (2 (let ((ppss (save-excursion (syntax-ppss (match-beginning 0)))))
-         (unless (nth 4 ppss)
-           (when (nth 3 ppss)
-             (string-to-syntax "|"))))))
+    ;; Last " ends a string if already inside a string
+    (2 (and (nth 3 (save-excursion (syntax-ppss (match-beginning 0))))
+            (string-to-syntax "|"))))
    ;; backslash acts as an operator if it's not inside a string
    ("\\\\"
     (0 (unless (nth 3 (save-excursion (syntax-ppss (match-beginning 0))))
