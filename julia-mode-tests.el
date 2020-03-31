@@ -262,7 +262,14 @@ qux"
 foo() |>
     bar |>
     baz
-qux"))
+qux")
+  (julia--should-indent
+   "x \\
+y \\
+z"
+   "x \\
+    y \\
+    z"))
 
 (ert-deftest julia--test-indent-ignores-blank-lines ()
   "Blank lines should not affect indentation of non-blank lines."
@@ -396,13 +403,13 @@ end"))
 (ert-deftest julia--test-backslash-indent ()
   "indentation for function(args...)"
   (julia--should-indent
-   "(\)
+   "(\\)
    1
-   (:\)
+   (:\\)
        1"
-   "(\)
+   "(\\)
 1
-(:\)
+(:\\)
 1"))
 
 (ert-deftest julia--test-indent-keyword-paren ()
@@ -657,6 +664,32 @@ end" 'end-of-defun "n == 0" "return fact(x)[ \n]+end" 'end 2))
   (should (equal (julia--substitute "\\alpha" 7) "α"))
   ; (should (equal (julia--substitute "\\alpha" 6) "α")) ; BROKEN
   )
+
+;;; syntax-propertize-function tests
+
+(ert-deftest julia--test-triple-quoted-string-syntax ()
+  (with-temp-buffer
+    (julia-mode)
+    (insert "\"\"\"
+hello world
+\"\"\"")
+    ;; If triple-quoted strings improperly syntax-propertized as 3
+    ;; single-quoted strings, this will show string starting at pos 3
+    ;; instead of 1.
+    (should (= 1 (nth 8 (syntax-ppss 5))))))
+
+(ert-deftest julia--test-backslash-syntax ()
+  (with-temp-buffer
+    (julia-mode)
+    (insert "1 \\ 2
+\"hello\\nthere\"")
+    (syntax-propertize 20)
+    (should (equal
+             (string-to-syntax ".")
+             (syntax-after 3)))
+    (should (equal
+             (string-to-syntax "\\")
+             (syntax-after 13)))))
 
 ;;;
 ;;; run all tests

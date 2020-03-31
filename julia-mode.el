@@ -85,6 +85,9 @@
     (modify-syntax-entry ?'  "." table)
     (modify-syntax-entry ?\" "\"" table)
     (modify-syntax-entry ?` "\"" table)
+    ;; Backslash has escape syntax for use in strings but
+    ;; julia-syntax-propertize-function sets punctuation syntax on it
+    ;; outside strings.
     (modify-syntax-entry ?\\ "\\" table)
 
     (modify-syntax-entry ?. "." table)
@@ -179,18 +182,6 @@
              ;; decl, dot
              "::" "."))
           (regexp-opt '(" #" " \n" "#" "\n"))))
-
-(defconst julia-triple-quoted-string-regex
-  ;; We deliberately put a group on the first and last delimiter, so
-  ;; we can mark these as string delimiters for font-lock.
-  (rx (group "\"")
-      (group "\"\""
-             ;; After the delimiter, we're a sequence of
-             ;; non-backslashes or blackslashes paired with something.
-             (*? (or (not (any "\\"))
-                     (seq "\\" anything)))
-             "\"\"")
-      (group "\"")))
 
 (defconst julia-unquote-regex
   "\\(\\s(\\|\\s-\\|-\\|[,%=<>\\+*/?&|!\\^~\\\\;:]\\|^\\)\\($[a-zA-Z0-9_]+\\)")
@@ -313,33 +304,21 @@
 (defconst julia-block-end-keywords
   (list "end" "else" "elseif" "catch" "finally"))
 
-(defun julia-stringify-triple-quote ()
-  "Put `syntax-table' property on triple-quoted string delimiters.
-
-Based on `python-syntax-stringify'."
-  (let* ((string-start-pos (- (point) 3))
-         (string-end-pos (point))
-         (ppss (prog2
-                   (backward-char 3)
-                   (syntax-ppss)
-                 (forward-char 3)))
-         (in-comment (nth 4 ppss))
-         (in-string (nth 8 ppss)))
-    (unless in-comment
-      (if in-string
-          ;; We're in a string, so this must be the closing triple-quote.
-          ;; Put | on the last " character.
-          (put-text-property (1- string-end-pos) string-end-pos
-                             'syntax-table (string-to-syntax "|"))
-        ;; We're not in a string, so this is the opening triple-quote.
-        ;; Put | on the first " character.
-        (put-text-property string-start-pos (1+ string-start-pos)
-                           'syntax-table (string-to-syntax "|"))))))
-
 (defconst julia-syntax-propertize-function
   (syntax-propertize-rules
-   ("\"\"\""
-    (0 (ignore (julia-stringify-triple-quote))))
+   ;; triple-quoted strings are a single string rather than 3
+   ((rx (group ?\") ?\" (group ?\"))
+    ;; First " starts a string if not already inside a string (or comment)
+    (1 (let ((ppss (save-excursion (syntax-ppss (match-beginning 0)))))
+         (unless (or (nth 3 ppss) (nth 4 ppss))
+           (string-to-syntax "|"))))
+    ;; Last " ends a string if already inside a string
+    (2 (and (nth 3 (save-excursion (syntax-ppss (match-beginning 0))))
+            (string-to-syntax "|"))))
+   ;; backslash acts as an operator if it's not inside a string
+   ("\\\\"
+    (0 (unless (nth 3 (save-excursion (syntax-ppss (match-beginning 0))))
+         (string-to-syntax "."))))
    (julia-char-regex
     (1 "\"")                    ; Treat ' as a string delimiter.
     (2 ".")                     ; Don't highlight anything between.
