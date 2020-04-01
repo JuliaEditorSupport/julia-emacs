@@ -88,6 +88,8 @@ matching line or end of match if END is non-nil.  Optional ARG is passed to FUN.
                                       (point-at-bol)))
                            ,to)))))
 
+;;; indent tests
+
 (ert-deftest julia--test-indent-if ()
   "We should indent inside if bodies."
   (julia--should-indent
@@ -452,6 +454,36 @@ end"
 end")
   )
 
+(ert-deftest julia--test-indent-hanging ()
+  "Test indentation for line following a hanging operator."
+  (julia--should-indent
+   "
+f(x) =
+x*
+x"
+   "
+f(x) =
+    x*
+    x")
+  (julia--should-indent
+   "
+a = \"#\" |>
+identity"
+   "
+a = \"#\" |>
+    identity")
+  ;; make sure we don't interpret a hanging operator in a comment as
+  ;; an actual hanging operator for indentation
+  (julia--should-indent
+   "
+a = \"#\" # |>
+identity"
+   "
+a = \"#\" # |>
+identity"))
+
+;;; font-lock tests
+
 (ert-deftest julia--test-symbol-font-locking-at-bol ()
   "Symbols get font-locked at beginning or line."
   (julia--should-font-lock
@@ -542,8 +574,8 @@ end")
   "Point moves to beginning of multi-line assignment function."
   (julia--should-move-point
     "f(x)=
-x*
-x" 'beginning-of-defun "\\*\nx" 1))
+    x*
+    x" 'beginning-of-defun "x$" 1))
 
 (ert-deftest julia--test-beginning-of-defun-assn-3 ()
   "Point moves to beginning of multi-line assignment function adjoining
