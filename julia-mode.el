@@ -297,6 +297,21 @@
 (defconst julia-block-end-keywords
   (list "end" "else" "elseif" "catch" "finally"))
 
+(defsubst julia-syntax-comment-or-string-p (&optional syntax-ppss)
+  "Return non-nil if SYNTAX-PPSS is inside string or comment."
+  (nth 8 (or syntax-ppss (syntax-ppss))))
+
+(defun julia-in-comment (&optional syntax-ppss)
+  "Return non-nil if point is inside a comment using SYNTAX-PPSS.
+Handles both single-line and multi-line comments."
+  (nth 4 (or syntax-ppss (syntax-ppss))))
+
+(defun julia-in-string (&optional syntax-ppss)
+  "Return non-nil if point is inside a string using SYNTAX-PPSS.
+Note this is Emacs' notion of what is highlighted as a string.
+As a result, it is true inside \"foo\", `foo` and 'f'."
+  (nth 3 (or syntax-ppss (syntax-ppss))))
+
 (defconst julia-syntax-propertize-function
   (syntax-propertize-rules
    ;; triple-quoted strings are a single string rather than 3
@@ -317,17 +332,6 @@
     (1 "\"")                    ; Treat ' as a string delimiter.
     (2 ".")                     ; Don't highlight anything between.
     (3 "\"")))) ; Treat the last " in """ as a string delimiter.
-
-(defun julia-in-comment (&optional syntax-ppss)
-  "Return non-nil if point is inside a comment using SYNTAX-PPSS.
-Handles both single-line and multi-line comments."
-  (nth 4 (or syntax-ppss (syntax-ppss))))
-
-(defun julia-in-string (&optional syntax-ppss)
-  "Return non-nil if point is inside a string using SYNTAX-PPSS.
-Note this is Emacs' notion of what is highlighted as a string.
-As a result, it is true inside \"foo\", `foo` and 'f'."
-  (nth 3 (or syntax-ppss (syntax-ppss))))
 
 (defun julia-in-brackets ()
   "Return non-nil if point is inside square brackets."
@@ -586,10 +590,6 @@ TYPE can be `comment', `string' or `paren'."
     (cond
      ((nth 8 ppss) (if (nth 4 ppss) 'comment 'string))
      ((nth 1 ppss) 'paren))))
-
-(defsubst julia-syntax-comment-or-string-p (&optional syntax-ppss)
-  "Return non-nil if SYNTAX-PPSS is inside string or comment."
-  (nth 8 (or syntax-ppss (syntax-ppss))))
 
 (defun julia-looking-at-beginning-of-defun (&optional syntax-ppss)
   "Check if point is at `beginning-of-defun' using SYNTAX-PPSS."
