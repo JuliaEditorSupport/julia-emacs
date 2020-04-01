@@ -322,7 +322,7 @@ As a result, it is true inside \"foo\", `foo` and 'f'."
     (1 (unless (julia-syntax-comment-or-string-p
                 (save-excursion (syntax-ppss (match-beginning 0))))
          (string-to-syntax "|")))
-    ;; Last " ends a string if already inside a string
+    ;; Last " ends a string unless first " did not start string
     (2 (unless (julia-syntax-comment-or-string-p
                 (save-excursion (syntax-ppss (match-beginning 0))))
          (string-to-syntax "|"))))
