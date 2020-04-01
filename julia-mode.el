@@ -304,14 +304,17 @@
 (defconst julia-syntax-propertize-function
   (syntax-propertize-rules
    ;; triple-quoted strings are a single string rather than 3
-   ((rx (group ?\") ?\" (group ?\"))
+   ((rx (group ?\") "\"\""
+        (*? (or (not (any ?\\)) (and ?\\ anything)))
+        "\"\"" (group ?\"))
     ;; First " starts a string if not already inside a string (or comment)
-    (1 (let ((ppss (save-excursion (syntax-ppss (match-beginning 0)))))
-         (unless (or (nth 3 ppss) (nth 4 ppss))
-           (string-to-syntax "|"))))
+    (1 (unless (julia-syntax-comment-or-string-p
+                (save-excursion (syntax-ppss (match-beginning 0))))
+         (string-to-syntax "|")))
     ;; Last " ends a string if already inside a string
-    (2 (and (nth 3 (save-excursion (syntax-ppss (match-beginning 0))))
-            (string-to-syntax "|"))))
+    (2 (unless (julia-syntax-comment-or-string-p
+                (save-excursion (syntax-ppss (match-beginning 0))))
+         (string-to-syntax "|"))))
    ;; backslash acts as an operator if it's not inside a string
    ("\\\\"
     (0 (unless (nth 3 (save-excursion (syntax-ppss (match-beginning 0))))

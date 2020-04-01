@@ -513,6 +513,17 @@ end")
     (julia--should-font-lock string 74 font-lock-type-face) ; B
     ))
 
+(ert-deftest julia--test-triple-quote-string-font-lock ()
+  "Test that triple quoted strings are font-locked correctly even with escapes."
+  (let ((s1 "\"\"\"a\\\"\\\"\"b\"\"\"d")
+        (s2 "\"\"\"a\\\"\"\"b\"\"\"d"))
+    (julia--should-font-lock s1 4 font-lock-string-face)
+    (julia--should-font-lock s1 10 font-lock-string-face)
+    (julia--should-font-lock s1 14 nil)
+    (julia--should-font-lock s2 4 font-lock-string-face)
+    (julia--should-font-lock s2 9 font-lock-string-face)
+    (julia--should-font-lock s2 13 nil)))
+
 ;;; Movement
 (ert-deftest julia--test-beginning-of-defun-assn-1 ()
   "Point moves to beginning of single-line assignment function."
