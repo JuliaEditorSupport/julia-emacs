@@ -48,19 +48,15 @@
 
 (defcustom julia-indent-offset 4
   "Number of spaces per indentation level."
-  :type 'integer
-  :group 'julia)
+  :type 'integer)
 
 (defface julia-macro-face
   '((t :inherit font-lock-preprocessor-face))
-  "Face for Julia macro invocations."
-  :group 'julia-mode)
+  "Face for Julia macro invocations.")
 
 (defface julia-quoted-symbol-face
   '((t :inherit font-lock-constant-face))
-  "Face for quoted Julia symbols, e.g. :foo."
-  :group 'julia-mode)
-
+  "Face for quoted Julia symbols, e.g. :foo.")
 
 ;;;###autoload
 (add-to-list 'auto-mode-alist '("\\.jl\\'" . julia-mode))
@@ -317,7 +313,8 @@
          (string-to-syntax "|"))))
    ;; backslash acts as an operator if it's not inside a string
    ("\\\\"
-    (0 (unless (nth 3 (save-excursion (syntax-ppss (match-beginning 0))))
+    (0 (unless (julia-in-string
+                (save-excursion (syntax-ppss (match-beginning 0))))
          (string-to-syntax "."))))
    (julia-char-regex
     (1 "\"")                    ; Treat ' as a string delimiter.
@@ -345,7 +342,7 @@ As a result, it is true inside \"foo\", `foo` and 'f'."
 
       (while (< (point) start-pos)
         ;; Don't count [ or ] inside strings, characters or comments.
-        (unless (or (julia-in-string) (julia-in-comment))
+        (unless (julia-syntax-comment-or-string-p)
 
           (when (looking-at (rx "["))
             (cl-incf open-count))
@@ -361,7 +358,7 @@ As a result, it is true inside \"foo\", `foo` and 'f'."
   "Return the word at point if it matches any keyword in KW-LIST.
 KW-LIST is a list of strings.  The word at point is not considered
 a keyword if used as a field name, X.word, or quoted, :word."
-  (and (or (= (point) 1)
+  (and (or (bobp)
 	   (and (not (equal (char-before (point)) ?.))
 		(not (equal (char-before (point)) ?:))))
        (not (looking-at "("))           ; handle "function(" when on (
@@ -391,7 +388,7 @@ symbol, gives up when this is not true."
       (while (and (not done) (< (point-min) (point)))
         (julia-safe-backward-sexp)
         (cond
-         ((looking-at (rx (or "import" "export" "using")))
+         ((looking-at (regexp-opt (list "import" "export" "using")))
           (setf done (point)))
          ((looking-at (rx (group (* (or word (syntax symbol)))) (0+ space) ":"))
           (if module
@@ -433,12 +430,6 @@ Do not move back beyond MIN."
 	   (goto-char pos)
 	   (+ julia-indent-offset (current-indentation))))))
 
-(defsubst julia--safe-backward-char ()
-  "Move back one character, but don't error if we're at the
-beginning of the buffer."
-  (unless (eq (point) (point-min))
-    (backward-char)))
-
 (defcustom julia-max-block-lookback 20000
   "When indenting, don't look back more than this many characters
 to see if there are unclosed blocks.
@@ -446,8 +437,7 @@ to see if there are unclosed blocks.
 This variable has a small effect on indent performance if set
 too high, but stops indenting in the middle of long blocks if set
 too low."
-  :type 'integer
-  :group 'julia)
+  :type 'integer)
 
 (defun julia-paren-indent ()
   "Return the column of the text following the innermost
@@ -727,6 +717,7 @@ Return nil if point is not in a function, otherwise point."
 ;;;###autoload
 (define-derived-mode julia-mode prog-mode "Julia"
   "Major mode for editing julia code."
+  :group 'julia
   (set-syntax-table julia-mode-syntax-table)
   (setq-local comment-start "# ")
   (setq-local comment-start-skip "#+\\s-*")
