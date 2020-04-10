@@ -774,7 +774,7 @@ strings."
 ;; (add-hook 'julia-mode-hook 'julia-math-mode)
 ;; (add-hook 'inferior-julia-mode-hook 'julia-math-mode)
 
-(when (require 'latex nil t)
+(when (featurep 'latex)
   (declare-function LaTeX-math-abbrev-prefix "latex")
 
   (defun julia-math-insert (s)
