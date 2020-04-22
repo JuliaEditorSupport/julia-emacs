@@ -32,4 +32,6 @@ Please
 
 2. add a short summary in the [Unreleased section of the CHANGELOG](CHANGELOG.md#unreleased).
 
+3. use the `rx` macro (S-expressions) whenever rewriting existing regular expressions or introducing new ones; it keeps the code much more readable.
+
 We do our best to provide feedback within 2 weeks, feel free to bump in a comment after that.
