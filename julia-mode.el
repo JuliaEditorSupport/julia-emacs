@@ -412,7 +412,9 @@ Do not move back beyond position MIN."
               (cond ((julia-at-keyword julia-block-start-keywords)
                      (+ nesting-count 1))
                     ((and (equal (current-word t) "end")
-                          (not (julia-in-comment)))
+                          (not (julia-in-comment))
+                          ;; Do not consider the symbol `:end` a block ending.
+                          (not (equal (char-before (point)) ?:)))
                      (- nesting-count 1))
                     (t nesting-count))))
       (if (> nesting-count 0)
