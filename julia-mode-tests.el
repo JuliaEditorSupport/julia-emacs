@@ -441,7 +441,16 @@ r = 1
 end"
    "if a == :end
     r = 1
-end"))
+end")
+
+  (julia--should-indent
+   "if a == a[end-4:end]
+r = 1
+end"
+   "if a == a[end-4:end]
+    r = 1
+end")
+  )
 
 (ert-deftest julia--test-symbol-font-locking-at-bol ()
   "Symbols get font-locked at beginning or line."
