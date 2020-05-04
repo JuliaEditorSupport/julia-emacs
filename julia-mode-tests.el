@@ -433,6 +433,25 @@ function( i=1:2 )
     end
 end")
 
+(ert-deftest julia--test-indent-ignore-:end-as-block-ending ()
+  "Do not consider `:end` as a block ending."
+  (julia--should-indent
+   "if a == :end
+r = 1
+end"
+   "if a == :end
+    r = 1
+end")
+
+  (julia--should-indent
+   "if a == a[end-4:end]
+r = 1
+end"
+   "if a == a[end-4:end]
+    r = 1
+end")
+  )
+
 (ert-deftest julia--test-symbol-font-locking-at-bol ()
   "Symbols get font-locked at beginning or line."
   (julia--should-font-lock

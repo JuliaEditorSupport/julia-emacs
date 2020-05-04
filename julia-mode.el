@@ -411,8 +411,7 @@ Do not move back beyond position MIN."
         (setq nesting-count
               (cond ((julia-at-keyword julia-block-start-keywords)
                      (+ nesting-count 1))
-                    ((and (equal (current-word t) "end")
-                          (not (julia-in-comment)))
+                    ((julia-at-keyword '("end"))
                      (- nesting-count 1))
                     (t nesting-count))))
       (if (> nesting-count 0)
