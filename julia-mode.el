@@ -705,10 +705,11 @@ Return nil if point is not in a function, otherwise point."
   ;; don't use syntax classes, screws egrep
   '(("Function (_)" "[ \t]*function[ \t]+\\(_[^ \t\n]*\\)" 1)
     ("Function" "^[ \t]*function[ \t]+\\([^_][^\t\n]*\\)" 1)
-    ("Const" "[ \t]*const \\([^ \t\n]*\\)" 1)
-    ("Type"  "^[ \t]*[a-zA-Z0-9_]*type[a-zA-Z0-9_]* \\([^ \t\n]*\\)" 1)
-    ("Require"      " *\\(\\brequire\\)(\\([^ \t\n)]*\\)" 2)
-    ("Include"      " *\\(\\binclude\\)(\\([^ \t\n)]*\\)" 2)
+    ("Function" "^[ \t]*\\(\\(@.+ \\)?[_a-zA-Z0-9]+\(.*\)\\) *= " 1)
+    ("Const" "^[ \t]*const \\([^ \t\n]*\\) *= " 1)
+    ("Struct" "^[ \t]*\\(\\(mutable \\)*struct [^ \t\n]*\\)" 1)
+    ("Require" " *\\(\\brequire\\)(\\([^ \t\n)]*\\)" 2)
+    ("Include" " *\\(\\binclude\\)(\\([^ \t\n)]*\\)" 2)
     ;; ("Classes" "^.*setClass(\\(.*\\)," 1)
     ;; ("Coercions" "^.*setAs(\\([^,]+,[^,]*\\)," 1) ; show from and to
     ;; ("Generics" "^.*setGeneric(\\([^,]*\\)," 1)
