@@ -703,10 +703,10 @@ Return nil if point is not in a function, otherwise point."
 ;;; IMENU
 (defvar julia-imenu-generic-expression
   ;; don't use syntax classes, screws egrep
-  '(("Function (_)" "^[ \t]*function[ \t]+\\(_.*?\\)\\( +end\\|$\\)" 1)
-    ("Function (_)" "^[ \t]*\\(\\(@.+ \\)?_[!\._a-zA-Z0-9]+\(.*\).*\\) = " 1)
-    ("Function" "^[ \t]*function[ \t]+\\([^_].*?\\)\\( +end\\|$\\)" 1)
-    ("Function" "^[ \t]*\\(\\(@.+ \\)?\(?<!_\)[!\.a-zA-Z0-9][!\._a-zA-Z0-9]*\(.*\).*\\) =" 1)
+  '(("Function (_)" "^[ \t]*\\(@.+ \\)?function[ \t]+\\(_.*?\\)\\( +end\\|$\\)" 2)
+    ("Function (_)" "^[ \t]*\\(@.+ \\)?\\(_[!\._a-zA-Z0-9]+\(.*\).*\\) = " 2)
+    ("Function" "^[ \t]*\\(@.+ \\)?function[ \t]+\\([^_].*?\\)\\( +end\\|$\\)" 2)
+    ("Function" "^[ \t]*\\(@.+ \\)?\\([!\.a-zA-Z0-9][!\._a-zA-Z0-9]*\(.*\).*\\) = " 2)
     ("Const" "^[ \t]*const \\([^ \t\n]*\\) *= " 1)
     ("Struct" "^[ \t]*\\(\\(mutable \\)*struct [^ \t\n]*\\)" 1)
     ("Require" " *\\(\\brequire\\)(\\([^ \t\n)]*\\)" 2)
