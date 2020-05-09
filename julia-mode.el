@@ -755,7 +755,7 @@ Return nil if point is not in a function, otherwise point."
          (group (zero-or-one "mutable" space) "struct" space (one-or-more alnum)))))
 
 ;;; IMENU
-(setq julia-imenu-generic-expression
+(defvar julia-imenu-generic-expression
   ;; don't use syntax classes, screws egrep
   `(("Function" ,julia-imenu-public-multiline-fn 1)
     ("Function" ,julia-imenu-public-singleline-fn 1)
