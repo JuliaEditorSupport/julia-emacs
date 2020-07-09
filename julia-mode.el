@@ -303,14 +303,11 @@
 (defconst julia-syntax-propertize-function
   (syntax-propertize-rules
    ;; triple-quoted strings are a single string rather than 3
-   ((rx (group ?\") ?\" (group ?\"))
-    ;; First " starts a string if not already inside a string (or comment)
-    (1 (let ((ppss (save-excursion (syntax-ppss (match-beginning 0)))))
-         (unless (or (nth 3 ppss) (nth 4 ppss))
-           (string-to-syntax "|"))))
-    ;; Last " ends a string if already inside a string
-    (2 (and (nth 3 (save-excursion (syntax-ppss (match-beginning 0))))
-            (string-to-syntax "|"))))
+   ("\"\"\""
+    (0 (ignore (julia-syntax-stringify))))
+   ;; same with triple-quoted backticks
+   ("```"
+    (0 (ignore (julia-syntax-stringify))))
    ;; backslash acts as an operator if it's not inside a string
    ("\\\\"
     (0 (unless (nth 3 (save-excursion (syntax-ppss (match-beginning 0))))
@@ -320,6 +317,30 @@
     (1 "\"")
     (2 "\""))))
 
+(defun julia-syntax-stringify ()
+  "Put `syntax-table' property correctly on triple-quoted strings and cmds."
+  (let* ((ppss (save-excursion (syntax-ppss (match-beginning 0))))
+         (string-open (and (not (nth 4 ppss)) (nth 8 ppss))))
+    (cond
+     ;; this set of quotes delimit the start of string/cmd
+     ((not string-open)
+      (put-text-property (match-beginning 0) (1+ (match-beginning 0))
+                         'syntax-table (string-to-syntax "|")))
+     ;; this set of quotes closes the current string/cmd
+     ((and
+       ;; check that """ closes """ and ``` closes ```
+       (eq (char-before) (char-after string-open))
+       ;; check that triple quote isn't escaped by odd number of backslashes
+       (let ((i 0))
+         (while (and (< (point-min) (- (match-beginning 0) i))
+                     (eq (char-before (- (match-beginning 0) i)) ?\\))
+           (setq i (1+ i)))
+         (cl-evenp i)))
+      (put-text-property (1- (match-end 0)) (match-end 0)
+                         'syntax-table (string-to-syntax "|")))
+     ;; Put point after (match-beginning 0) to account for possibility
+     ;; of overlapping triple-quotes with first escaped
+     ((backward-char 2)))))
 
 (defun julia-in-comment (&optional syntax-ppss)
   "Return non-nil if point is inside a comment using SYNTAX-PPSS.
