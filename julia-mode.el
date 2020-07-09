@@ -113,9 +113,8 @@
             (syntax whitespace)
             bol)
         (group "'")
-        (group
-         (or (repeat 0 8 (not (any "'"))) (not (any "\\"))
-             "\\\\"))
+        (or (repeat 0 8 (not (any "'"))) (not (any "\\"))
+            "\\\\")
         (group "'"))))
 
 (defconst julia-hanging-operator-regexp
@@ -317,9 +316,10 @@
     (0 (unless (nth 3 (save-excursion (syntax-ppss (match-beginning 0))))
          (string-to-syntax "."))))
    (julia-char-regex
-    (1 "\"")                    ; Treat ' as a string delimiter.
-    (2 ".")                     ; Don't highlight anything between.
-    (3 "\"")))) ; Treat the last " in """ as a string delimiter.
+    ;; treat ' in 'c' as string-delimiter
+    (1 "\"")
+    (2 "\""))))
+
 
 (defun julia-in-comment (&optional syntax-ppss)
   "Return non-nil if point is inside a comment using SYNTAX-PPSS.
