@@ -532,8 +532,17 @@ end")
     (julia--should-font-lock string 74 font-lock-type-face) ; B
     ))
 
+(ert-deftest julia--test-single-quote-string-font-lock ()
+  "Test that single quoted strings are font-locked correctly even with escapes."
+  ;; Issue #15
+  (let ((s1 "\"a\\\"b\"c"))
+    (julia--should-font-lock s1 2 font-lock-string-face)
+    (julia--should-font-lock s1 5 font-lock-string-face)
+    (julia--should-font-lock s1 7 nil)))
+
 (ert-deftest julia--test-triple-quote-string-font-lock ()
   "Test that triple quoted strings are font-locked correctly even with escapes."
+  ;; Issue #15
   (let ((s1 "\"\"\"a\\\"\\\"\"b\"\"\"d")
         (s2 "\"\"\"a\\\"\"\"b\"\"\"d")
         (s3 "\"\"\"a```b\"\"\"d")
