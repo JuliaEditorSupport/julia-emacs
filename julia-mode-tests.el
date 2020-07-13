@@ -532,6 +532,12 @@ end")
     (julia--should-font-lock string 74 font-lock-type-face) ; B
     ))
 
+(ert-deftest julia--test-ccall-font-lock ()
+  (let ((s1 "t = ccall(:clock, Int32, ())"))
+    (julia--should-font-lock s1 5 font-lock-builtin-face)
+    (julia--should-font-lock s1 4 nil)
+    (julia--should-font-lock s1 10 nil)))
+
 ;;; Movement
 (ert-deftest julia--test-beginning-of-defun-assn-1 ()
   "Point moves to beginning of single-line assignment function."

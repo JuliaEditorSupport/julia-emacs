@@ -248,7 +248,7 @@
 (defconst julia-keyword-regex
   (regexp-opt
    '("if" "else" "elseif" "while" "for" "begin" "end" "quote"
-     "try" "catch" "return" "local" "function" "macro" "ccall"
+     "try" "catch" "return" "local" "function" "macro"
      "finally" "break" "continue" "global" "where"
      "module" "using" "import" "export" "const" "let" "do"
      "baremodule"
@@ -276,6 +276,7 @@
      '("true" "false" "C_NULL" "Inf" "NaN" "Inf32" "NaN32" "nothing" "undef" "missing")
      'symbols)
     'font-lock-constant-face)
+   (cons "ccall" 'font-lock-builtin-face)
    (list julia-unquote-regex 2 'font-lock-constant-face)
    (list julia-forloop-in-regex 1 'font-lock-keyword-face)
    (list julia--forloop-=-regex 1 'font-lock-keyword-face)
