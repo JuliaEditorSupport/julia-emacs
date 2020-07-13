@@ -273,7 +273,8 @@
    (cons julia-macro-regex ''julia-macro-face)
    (cons
     (regexp-opt
-     '("true" "false" "C_NULL" "Inf" "NaN" "Inf32" "NaN32" "nothing" "undef" "missing")
+     ;; constants defined in Core plus true/false
+     '("true" "false" "Cvoid" "Inf" "NaN" "Inf32" "NaN32" "nothing" "undef" "missing")
      'symbols)
     'font-lock-constant-face)
    (cons "ccall" 'font-lock-builtin-face)
