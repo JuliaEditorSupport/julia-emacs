@@ -532,6 +532,56 @@ end")
     (julia--should-font-lock string 74 font-lock-type-face) ; B
     ))
 
+(ert-deftest julia--test-single-quote-string-font-lock ()
+  "Test that single quoted strings are font-locked correctly even with escapes."
+  ;; Issue #15
+  (let ((s1 "\"a\\\"b\"c"))
+    (julia--should-font-lock s1 2 font-lock-string-face)
+    (julia--should-font-lock s1 5 font-lock-string-face)
+    (julia--should-font-lock s1 7 nil)))
+
+(ert-deftest julia--test-triple-quote-string-font-lock ()
+  "Test that triple quoted strings are font-locked correctly even with escapes."
+  ;; Issue #15
+  (let ((s1 "\"\"\"a\\\"\\\"\"b\"\"\"d")
+        (s2 "\"\"\"a\\\"\"\"b\"\"\"d")
+        (s3 "\"\"\"a```b\"\"\"d")
+        (s4 "\\\"\"\"a\\\"\"\"b\"\"\"d")
+        (s5 "\"\"\"a\\\"\"\"\"b"))
+    (julia--should-font-lock s1 4 font-lock-string-face)
+    (julia--should-font-lock s1 10 font-lock-string-face)
+    (julia--should-font-lock s1 14 nil)
+    (julia--should-font-lock s2 4 font-lock-string-face)
+    (julia--should-font-lock s2 9 font-lock-string-face)
+    (julia--should-font-lock s2 13 nil)
+    (julia--should-font-lock s3 4 font-lock-string-face)
+    (julia--should-font-lock s3 8 font-lock-string-face)
+    (julia--should-font-lock s3 12 nil)
+    (julia--should-font-lock s4 5 font-lock-string-face)
+    (julia--should-font-lock s4 10 font-lock-string-face)
+    (julia--should-font-lock s4 14 nil)
+    (julia--should-font-lock s5 4 font-lock-string-face)
+    (julia--should-font-lock s5 10 nil)))
+
+(ert-deftest julia--test-triple-quote-cmd-font-lock ()
+  "Test that triple-quoted cmds are font-locked correctly even with escapes."
+  (let ((s1 "```a\\`\\``b```d")
+        (s2 "```a\\```b```d")
+        (s3 "```a\"\"\"b```d")
+        (s4 "\\```a\\```b```d"))
+    (julia--should-font-lock s1 4 font-lock-string-face)
+    (julia--should-font-lock s1 10 font-lock-string-face)
+    (julia--should-font-lock s1 14 nil)
+    (julia--should-font-lock s2 4 font-lock-string-face)
+    (julia--should-font-lock s2 9 font-lock-string-face)
+    (julia--should-font-lock s2 13 nil)
+    (julia--should-font-lock s3 4 font-lock-string-face)
+    (julia--should-font-lock s3 8 font-lock-string-face)
+    (julia--should-font-lock s3 12 nil)
+    (julia--should-font-lock s4 5 font-lock-string-face)
+    (julia--should-font-lock s4 10 font-lock-string-face)
+    (julia--should-font-lock s4 14 nil)))
+
 (ert-deftest julia--test-ccall-font-lock ()
   (let ((s1 "t = ccall(:clock, Int32, ())"))
     (julia--should-font-lock s1 5 font-lock-builtin-face)
@@ -701,6 +751,14 @@ hello world
     ;; If triple-quoted strings improperly syntax-propertized as 3
     ;; single-quoted strings, this will show string starting at pos 3
     ;; instead of 1.
+    (should (= 1 (nth 8 (syntax-ppss 5))))))
+
+(ert-deftest julia--test-triple-quoted-cmd-syntax ()
+  (with-temp-buffer
+    (julia-mode)
+    (insert "```
+hello world
+```")
     (should (= 1 (nth 8 (syntax-ppss 5))))))
 
 (ert-deftest julia--test-backslash-syntax ()
