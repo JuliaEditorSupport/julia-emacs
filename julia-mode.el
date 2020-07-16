@@ -247,7 +247,7 @@
 (defconst julia-keyword-regex
   (regexp-opt
    '("if" "else" "elseif" "while" "for" "begin" "end" "quote"
-     "try" "catch" "return" "local" "function" "macro" "ccall"
+     "try" "catch" "return" "local" "function" "macro"
      "finally" "break" "continue" "global" "where"
      "module" "using" "import" "export" "const" "let" "do"
      "baremodule"
@@ -272,9 +272,11 @@
    (cons julia-macro-regex ''julia-macro-face)
    (cons
     (regexp-opt
-     '("true" "false" "C_NULL" "Inf" "NaN" "Inf32" "NaN32" "nothing" "undef" "missing")
+     ;; constants defined in Core plus true/false
+     '("true" "false" "Cvoid" "Inf" "NaN" "Inf32" "NaN32" "nothing" "undef" "missing")
      'symbols)
     'font-lock-constant-face)
+   (cons "ccall" 'font-lock-builtin-face)
    (list julia-unquote-regex 2 'font-lock-constant-face)
    (list julia-forloop-in-regex 1 'font-lock-keyword-face)
    (list julia--forloop-=-regex 1 'font-lock-keyword-face)
@@ -794,7 +796,7 @@ strings."
 ;; (add-hook 'julia-mode-hook 'julia-math-mode)
 ;; (add-hook 'inferior-julia-mode-hook 'julia-math-mode)
 
-(when (require 'latex nil t)
+(when (featurep 'latex)
   (declare-function LaTeX-math-abbrev-prefix "latex")
 
   (defun julia-math-insert (s)
