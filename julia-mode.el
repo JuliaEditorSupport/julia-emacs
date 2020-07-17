@@ -45,6 +45,7 @@
   "Major mode for the julia programming language."
   :group 'languages
   :prefix "julia-")
+;; all custom variables are automatically added to the most recent defgroup
 
 (defcustom julia-indent-offset 4
   "Number of spaces per indentation level."
