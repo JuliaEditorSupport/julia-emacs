@@ -889,7 +889,7 @@ end" 'end-of-defun "n == 0" "return fact(x)[ \n]+end" 'end 2))
     (julia-mode)
     (insert contents)
     (goto-char position)
-    (cons (julia-mode--latexsub-start-symbol) (julia-mode--latexsub-end-symbol))))
+    (cons (julia--latexsub-start-symbol) (julia--latexsub-end-symbol))))
 
 (ert-deftest julia--test-find-latex ()
   (should (equal (julia--find-latex "\\alpha " 7) (cons 1 7)))

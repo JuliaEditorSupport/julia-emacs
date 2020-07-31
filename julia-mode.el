@@ -808,7 +808,7 @@ strings."
 (define-key julia-mode-map (kbd "<backtab>") 'julia-manual-deindent)
 
 ;; (See Julia issue #8947 for why we don't use the Emacs tex input mode.)
-(defun julia-mode--latexsub-start-symbol ()
+(defun julia--latexsub-start-symbol ()
   "Determine the start location for LaTeX-like symbol at point.
 If there is not a LaTeX-like symbol at point, return nil."
   (save-excursion
@@ -824,7 +824,7 @@ If there is not a LaTeX-like symbol at point, return nil."
     (when (= ?\\ (char-before))
       (- (point) 1))))
 
-(defun julia-mode--latexsub-end-symbol ()
+(defun julia--latexsub-end-symbol ()
   "Determine the end location for LaTeX-like symbol at point."
   (save-excursion
     (while (not (or (eobp)
@@ -836,9 +836,9 @@ If there is not a LaTeX-like symbol at point, return nil."
 (defun julia-mode-latexsub-completion-at-point-around ()
   "Return completion for LaTeX-like symbol around point.
 Suitable for use in `completion-at-point-functions'."
-  (let ((beg (julia-mode--latexsub-start-symbol)))
+  (let ((beg (julia--latexsub-start-symbol)))
     (when beg
-      (list beg (julia-mode--latexsub-end-symbol) julia-mode-latexsubs
+      (list beg (julia--latexsub-end-symbol) julia-mode-latexsubs
             :exclusive 'no
             :annotation-function (lambda (s)
                                    (concat " " (gethash s julia-mode-latexsubs)))
@@ -848,7 +848,7 @@ Suitable for use in `completion-at-point-functions'."
 (defun julia-mode-latexsub-completion-at-point-before ()
   "Return completion for LaTeX-like symbol before point.
 Suitable for use in `completion-at-point-functions'."
-  (let ((beg (julia-mode--latexsub-start-symbol)))
+  (let ((beg (julia--latexsub-start-symbol)))
     (when beg
       (list beg (point) julia-mode-latexsubs :exclusive 'no
             :annotation-function (lambda (s)
