@@ -910,7 +910,6 @@ end" 'end-of-defun "n == 0" "return fact(x)[ \n]+end" 'end 2))
   "Call `expand-abbrev' in buffer with CONTENTS at POSITION."
   (with-temp-buffer
     (julia-mode)
-    (abbrev-mode)
     (insert contents)
     (goto-char position)
     (expand-abbrev)
@@ -922,6 +921,28 @@ end" 'end-of-defun "n == 0" "return fact(x)[ \n]+end" 'end 2))
   (should (equal (julia--abbrev "\\kappa\\alpha(" 13)  "\\kappaα("))
   ; (should (equal (julia--abbrev "\\alpha(" 6)  "α")) ; BROKEN
   )
+
+(defun julia--call-latexsub-exit-function (contents beg position name auto-abbrev)
+  "Return buffer produced by `julia--latexsub-exit-function'."
+  (with-temp-buffer
+    (insert contents)
+    (goto-char position)
+    (setq-local julia-automatic-latexsub auto-abbrev)
+    (funcall (julia--latexsub-exit-function beg ) name 'finished)
+    (buffer-string)))
+
+(ert-deftest julia--test-latexsub-exit-function ()
+  (should (equal (julia--call-latexsub-exit-function "\\alpha" 1 7 "\\alpha" t) "α"))
+  (should (equal (julia--call-latexsub-exit-function "x\\alpha " 2 8 "\\alpha" t)  "xα "))
+  (should (equal (julia--call-latexsub-exit-function
+                  "\\kappa\\alpha(" 7 13 "\\alpha" t)
+                 "\\kappaα("))
+  ;; test that LaTeX not expanded when `julia-automatic-latexsub' is nil
+  (should (equal (julia--call-latexsub-exit-function "\\alpha" 1 7 "\\alpha" nil) "\\alpha"))
+  (should (equal (julia--call-latexsub-exit-function "x\\alpha " 2 8 "\\alpha" nil)  "x\\alpha "))
+  (should (equal (julia--call-latexsub-exit-function
+                  "\\kappa\\alpha(" 7 13 "\\alpha" nil)
+                 "\\kappa\\alpha(")))
 
 ;;; syntax-propertize-function tests
 

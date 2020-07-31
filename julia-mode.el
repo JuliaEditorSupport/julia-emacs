@@ -54,9 +54,16 @@
 
 (defcustom julia-force-tab-complete t
   "Use Tab for completion instead of M-Tab in `julia-mode'.
-This overrides `tab-always-indent' in `julia-mode' buffers. It also
-enables `abbrev-mode' so that inserting a space character will replace
-a LaTeX string with a unicode symbol."
+This overrides `tab-always-indent' in `julia-mode' buffers."
+  :type 'boolean)
+
+(defcustom julia-automatic-latexsub t
+  "After completing a LaTeX symbol, replace it with corresponding unicode.
+`ivy-mode' completion will not trigger automatic latexsub due to
+upstream bug: <https://github.com/abo-abo/swiper/issues/2345>.
+
+User can still use `abbrev-mode' or `expand-abbrev' to substitute
+unicode for LaTeX even if disabled."
   :type 'boolean)
 
 (defface julia-macro-face
@@ -787,10 +794,7 @@ Return nil if point is not in a function, otherwise point."
   (add-hook 'completion-at-point-functions
             #'julia-mode-latexsub-completion-at-point-around nil t)
   (when julia-force-tab-complete
-    (setq-local tab-always-indent 'complete)
-    ;; To substitute a symbol for an abbrev, user will have to either
-    ;; insert a space after or call expand-abbrev (C-x a e)
-    (abbrev-mode 1))
+    (setq-local tab-always-indent 'complete))
   (setq indent-tabs-mode nil)
   (setq imenu-generic-expression julia-imenu-generic-expression)
   (imenu-add-to-menubar "Imenu"))
@@ -836,8 +840,9 @@ Suitable for use in `completion-at-point-functions'."
     (when beg
       (list beg (julia-mode--latexsub-end-symbol) julia-mode-latexsubs
             :exclusive 'no
-            :annotation-function #'(lambda (s)
-                                     (concat " " (gethash s julia-mode-latexsubs)))))))
+            :annotation-function (lambda (s)
+                                   (concat " " (gethash s julia-mode-latexsubs)))
+            :exit-function (julia--latexsub-exit-function beg)))))
 
 ;; Sometimes you want to complete a symbol point is at end of (with no space after)
 (defun julia-mode-latexsub-completion-at-point-before ()
@@ -846,8 +851,27 @@ Suitable for use in `completion-at-point-functions'."
   (let ((beg (julia-mode--latexsub-start-symbol)))
     (when beg
       (list beg (point) julia-mode-latexsubs :exclusive 'no
-            :annotation-function #'(lambda (s)
-                                     (concat " " (gethash s julia-mode-latexsubs)))))))
+            :annotation-function (lambda (s)
+                                   (concat " " (gethash s julia-mode-latexsubs)))
+            :exit-function (julia--latexsub-exit-function beg)))))
+
+(defun julia--latexsub-exit-function (beg)
+  "Return function to be used as `completion-extra-properties' `:exit-function'.
+When `julia-automatic-latexsub' is non-nil, returned function will
+substitute LaTeX symbols when called with a LaTeX string from before
+`point' and the symbol `finished'. BEG is the point in the current
+buffer where the LaTeX symbol starts."
+  (if julia-automatic-latexsub
+      ;; `julia--latexsub-exit-function' returns a lambda in order to close over BEG which
+      ;; would otherwise have to be recalculated.
+      (lambda (name status)
+        ;; `ivy-mode' always calls `:exit-function' with `sole' and not `finished' (see
+        ;; <https://github.com/abo-abo/swiper/issues/2345>). Instead of automatic
+        ;; expansion, user can either enable `abbrev-mode' or call `expand-abbrev'.
+        (when (eq status 'finished)
+          (abbrev-insert (abbrev-symbol name julia-latexsub-abbrev-table) name
+                         beg (point))))
+    #'ignore))
 
 ;; Math insertion in julia. Use it with
 ;; (add-hook 'julia-mode-hook 'julia-math-mode)
@@ -925,8 +949,7 @@ following commands are defined:
   (setq-local paragraph-start julia-prompt-regexp)
   (setq-local indent-line-function #'julia-indent-line)
   (when julia-force-tab-complete
-    (setq-local tab-always-indent 'complete)
-    (abbrev-mode 1))
+    (setq-local tab-always-indent 'complete))
   (add-hook 'completion-at-point-functions
             #'julia-mode-latexsub-completion-at-point-before nil t)
   (add-hook 'completion-at-point-functions
