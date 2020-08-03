@@ -928,7 +928,7 @@ end" 'end-of-defun "n == 0" "return fact(x)[ \n]+end" 'end 2))
     (insert contents)
     (goto-char position)
     (setq-local julia-automatic-latexsub auto-abbrev)
-    (funcall (julia--latexsub-exit-function beg ) name 'finished)
+    (funcall (julia--latexsub-exit-function beg) name 'finished)
     (buffer-string)))
 
 (ert-deftest julia--test-latexsub-exit-function ()
