@@ -806,6 +806,18 @@ hello world
              (string-to-syntax "\\")
              (syntax-after 13)))))
 
+(ert-deftest julia--test-indent-quoted-single-quote ()
+  "We should indent after seeing a character constant containing a single quote character."
+  (julia--should-indent "
+if c in ('\'')
+s = \"$c$c\"*string[startpos:pos]
+end
+" "
+if c in ('\'')
+s = \"$c$c\"*string[startpos:pos]
+end
+"))
+
 ;;;
 ;;; run all tests
 ;;;

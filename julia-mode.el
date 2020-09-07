@@ -110,8 +110,15 @@
             (syntax whitespace)
             bol)
         (group "'")
-        (or (repeat 0 8 (not (any "'"))) (not (any "\\"))
-            "\\\\")
+	(or 
+	 (not (any "\\'"))		; single character, not \ or '
+	 (seq ?\\ (or			; \ followed by ...
+		   (repeat 1 3 (any "0-7"))	   ; octal escape
+		   (seq ?x (repeat 1 2 (any hex))) ; hex escape
+		   (seq ?u (repeat 1 4 (any hex))) ; unicode escape
+		   (seq ?U (repeat 1 8 (any hex))) ; extended unicode escape
+		   (not (any "0-7xuU")))	   ; anything else
+	      ))
         (group "'"))))
 
 (defconst julia-hanging-operator-regexp
