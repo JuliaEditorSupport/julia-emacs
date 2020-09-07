@@ -88,6 +88,13 @@ matching line or end of match if END is non-nil.  Optional ARG is passed to FUN.
                                       (point-at-bol)))
                            ,to)))))
 
+(defmacro julia--should-regex-char-const (text)
+  "(string-match julia-char-regex `text') should return text"
+  `(with-temp-buffer
+     (julia-mode)
+     (and (= 0 (string-match julia-char-regex ,text))
+	  (string= ,text (match-string 0 ,text)))))
+
 ;;; indent tests
 
 (ert-deftest julia--test-indent-if ()
@@ -817,6 +824,16 @@ if c in ('\'')
 s = \"$c$c\"*string[startpos:pos]
 end
 "))
+
+(ert-deftest julia--test-quoted-char-const-1 () (julia--should-regex-char-const "'\\''"))
+(ert-deftest julia--test-quoted-char-const-2 () (julia--should-regex-char-const "'\\\"'"))
+(ert-deftest julia--test-quoted-char-const-3 () (julia--should-regex-char-const "'\\\\'"))
+(ert-deftest julia--test-quoted-char-const-4 () (julia--should-regex-char-const "'\\0'"))
+(ert-deftest julia--test-quoted-char-const-5 () (julia--should-regex-char-const "'\\xff'"))
+(ert-deftest julia--test-quoted-char-const-6 () (julia--should-regex-char-const "'\\u7f'"))
+(ert-deftest julia--test-quoted-char-const-7 () (julia--should-regex-char-const "'\\U7f7f7f'"))
+(ert-deftest julia--test-quoted-char-const-8 () (julia--should-regex-char-const "'\\n'"))
+(ert-deftest julia--test-quoted-char-const-9 () (julia--should-regex-char-const "'n'"))
 
 ;;;
 ;;; run all tests
