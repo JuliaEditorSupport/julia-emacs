@@ -634,7 +634,13 @@ end
 
 (ert-deftest julia--test-char-const-font-lock ()
   (dolist (c '("'\\''" "'\\\"'" "'\\\\'" "'\\010'" "'\\xfe'" "'\\uabcd'" "'\\Uabcdef01'" "'\\n'" "'\\alpha'" "'a'"  "'z'"))
-    (julia--should-font-lock c 1 font-lock-string-face)))
+    (let ((c (format " %s " c)))
+      (progn
+        (julia--should-font-lock c 1 nil)
+        (julia--should-font-lock c 2 font-lock-string-face)
+        (julia--should-font-lock c (- (length c) 1) font-lock-string-face)
+        (julia--should-font-lock c (length c) nil)
+    ))))
 
 ;;; Movement
 (ert-deftest julia--test-beginning-of-defun-assn-1 ()
