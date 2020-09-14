@@ -632,7 +632,7 @@ end
     (julia--should-font-lock s1 4 nil)
     (julia--should-font-lock s1 10 nil)))
 
-(ert-deftest julia--test-char-const-font-log ()
+(ert-deftest julia--test-char-const-font-lock ()
   (dolist (c '("'\\''" "'\\\"'" "'\\\\'" "'\\010'" "'\\xfe'" "'\\uabcd'" "'\\Uabcdef01'" "'\\n'" "'\\alpha'" "'a'"  "'z'"))
     (julia--should-font-lock c 1 font-lock-string-face)))
 
