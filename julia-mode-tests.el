@@ -632,6 +632,10 @@ end
     (julia--should-font-lock s1 4 nil)
     (julia--should-font-lock s1 10 nil)))
 
+(ert-deftest julia--test-char-const-font-log ()
+  (dolist (c '("'\\''" "'\\\"'" "'\\\\'" "'\\010'" "'\\xfe'" "'\\uabcd'" "'\\Uabcdef01'" "'\\n'" "'\\alpha'" "'a'"  "'z'"))
+    (julia--should-font-lock c 1 font-lock-string-face)))
+
 ;;; Movement
 (ert-deftest julia--test-beginning-of-defun-assn-1 ()
   "Point moves to beginning of single-line assignment function."
