@@ -113,7 +113,7 @@
         (or                             ; two alternatives
          (not (any "\\'"))              ; one character, not single quote or backslash
 	     (seq "\\"                      ; sequence of a backslash followed by ...
-              (or                       ; four alternatives
+              (or                       ; five alternatives
                (any "\\'\"?abfnrtv")    ; single character escape
                (repeat 1 3 (any "0-7")) ; octal escape
                (seq 'x' (repeat 1 8 hex))     ; hex escape
