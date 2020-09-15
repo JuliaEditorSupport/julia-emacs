@@ -116,9 +116,9 @@
               (or                       ; five alternatives
                (any "\\'\"?abfnrtv")    ; single character escape
                (repeat 1 3 (any "0-7")) ; octal escape
-               (seq 'x' (repeat 1 8 hex))     ; hex escape
-               (seq 'u' (repeat 1 4 hex))     ; unicode escape
-               (seq 'U' (repeat 1 8 hex)))))  ; extended unicode escaple
+               (seq "x" (repeat 1 8 hex))     ; hex escape
+               (seq "u" (repeat 1 4 hex))     ; unicode escape
+               (seq "U" (repeat 1 8 hex)))))  ; extended unicode escaple
         (group "'"))))                  ; end single quote of character constant
 
 (defconst julia-hanging-operator-regexp
