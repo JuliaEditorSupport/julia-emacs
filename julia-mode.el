@@ -111,7 +111,7 @@
             bol)
         (group "'")        ; start single quote of character constant
         (or                ; two alternatives
-         (not (any "\\'")) ; one character, not single quote or backslash
+         (not (any "\\"))  ; one character, not backslash
 	     (seq "\\"         ; sequence of a backslash followed by ...
               (or          ; five alternatives
                (any "\\'\"abfnrtv")          ; single character escape

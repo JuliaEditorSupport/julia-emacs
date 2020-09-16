@@ -633,7 +633,8 @@ end
     (julia--should-font-lock s1 10 nil)))
 
 (ert-deftest julia--test-char-const-font-lock ()
-  (dolist (c '("'\\''" "'\\\"'" "'\\\\'" "'\\010'" "'\\xfe'" "'\\uabcd'" "'\\Uabcdef01'" "'\\n'" "'a'" "'z'"))
+  (dolist (c '("'\\''" "'\\\"'" "'\\\\'" "'\\010'" "'\\xfe'" "'\\uabcd'" 
+               "'\\Uabcdef01'" "'\\n'" "'a'" "'z'" "'''"))
     (let ((c (format " %s " c)))
       (progn
         (julia--should-font-lock c 1 nil)
