@@ -109,10 +109,17 @@
             (syntax open-parenthesis)
             (syntax whitespace)
             bol)
-        (group "'")
-        (or (repeat 0 8 (not (any "'"))) (not (any "\\"))
-            "\\\\")
-        (group "'"))))
+        (group "'")        ; start single quote of character constant
+        (or                ; two alternatives
+         (not (any "\\"))  ; one character, not backslash
+	     (seq "\\"         ; sequence of a backslash followed by ...
+              (or          ; five alternatives
+               (any "\\'\"abfnrtv")          ; single character escape
+               (repeat 1 3 (any "0-7"))      ; octal escape
+               (seq "x" (repeat 1 2 hex))    ; hex escape
+               (seq "u" (repeat 1 4 hex))    ; unicode escape
+               (seq "U" (repeat 1 8 hex))))) ; extended unicode escape
+        (group "'"))))     ; end single quote of character constant
 
 (defconst julia-hanging-operator-regexp
   ;; taken from julia-parser.scm

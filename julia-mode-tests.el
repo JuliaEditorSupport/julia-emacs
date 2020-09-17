@@ -482,6 +482,18 @@ identity"
 a = \"#\" # |>
 identity"))
 
+(ert-deftest julia--test-indent-quoted-single-quote ()
+  "We should indent after seeing a character constant containing a single quote character."
+  (julia--should-indent "
+if c in ('\'')
+s = \"$c$c\"*string[startpos:pos]
+end
+" "
+if c in ('\'')
+    s = \"$c$c\"*string[startpos:pos]
+end
+"))
+
 ;;; font-lock tests
 
 (ert-deftest julia--test-symbol-font-locking-at-bol ()
@@ -619,6 +631,17 @@ identity"))
     (julia--should-font-lock s1 5 font-lock-builtin-face)
     (julia--should-font-lock s1 4 nil)
     (julia--should-font-lock s1 10 nil)))
+
+(ert-deftest julia--test-char-const-font-lock ()
+  (dolist (c '("'\\''" "'\\\"'" "'\\\\'" "'\\010'" "'\\xfe'" "'\\uabcd'" 
+               "'\\Uabcdef01'" "'\\n'" "'a'" "'z'" "'''"))
+    (let ((c (format " %s " c)))
+      (progn
+        (julia--should-font-lock c 1 nil)
+        (julia--should-font-lock c 2 font-lock-string-face)
+        (julia--should-font-lock c (- (length c) 1) font-lock-string-face)
+        (julia--should-font-lock c (length c) nil)
+    ))))
 
 ;;; Movement
 (ert-deftest julia--test-beginning-of-defun-assn-1 ()
