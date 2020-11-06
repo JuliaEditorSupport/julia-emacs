@@ -11,7 +11,9 @@ Unless you want to develop this package, it is recommended that you use it from 
 
 1. [Enable the MELPA repository](https://melpa.org/#/getting-started).
 
-2. Add `(require 'julia-mode)` to your Emacs init file.
+2. Add `(package-install 'julia-mode)` to your Emacs init file.
+
+3. Add `(require 'julia-mode)` to your Emacs init file.
 
 ## Using the source repository directly
 
