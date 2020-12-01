@@ -14,9 +14,7 @@ Unless you want to develop this package, it is recommended that you use it from 
 2. Add `(package-install 'julia-mode)` to your Emacs init file.
 
 3. Add `(require 'julia-mode)` to your Emacs init file.
-2. [Install](https://www.gnu.org/software/emacs/manual/html_node/emacs/Package-Installation.html) the `julia-mode` package.
 
-3. Add `(require 'julia-mode)` to your Emacs init file.
 ## Using the source repository directly
 
 Clone this repository, then use
