@@ -386,6 +386,15 @@ notpartofit"
    "using Foo: bar ,
     baz,
     quux
+notpartofit")
+  (julia--should-indent
+   "using Foo.Bar: bar ,
+baz,
+quux
+notpartofit"
+   "using Foo.Bar: bar ,
+    baz,
+    quux
 notpartofit"))
 
 (ert-deftest julia--test-indent-anonymous-function ()
