@@ -464,15 +464,14 @@ Do not move back beyond MIN."
 (defun julia-block-open-indentation ()
   "Get the current indentation or the start of a parenthetical block."
   (save-excursion
-    ;; narrow to one line to only search syntax on that line
-    (narrow-to-region (line-beginning-position) (line-end-position))
-    (prog1
+    (save-restriction
+      ;; narrow to one line to only search syntax on that line
+      (narrow-to-region (line-beginning-position) (line-end-position))
         (condition-case nil
             (progn
               (backward-up-list)
               (1+ (current-column)))
-          (error (current-indentation)))
-      (widen))))
+          (error (current-indentation))))))
 
 (defcustom julia-max-block-lookback 20000
   "When indenting, don't look back more than this many characters
