@@ -494,6 +494,93 @@ if c in ('\'')
 end
 "))
 
+(ert-deftest julia--test-indent-block-inside-paren ()
+  "We should indent a block inside of a parenthetical."
+  (julia--should-indent "
+variable = func(
+arg1,
+arg2,
+if cond
+statement()
+arg3
+else
+arg3
+end,
+arg4
+)" "
+variable = func(
+    arg1,
+    arg2,
+    if cond
+        statement()
+        arg3
+    else
+        arg3
+    end,
+    arg4
+)"))
+
+(ert-deftest julia--test-indent-block-inside-hanging-paren ()
+  "We should indent a block inside of a hanging parenthetical."
+  (julia--should-indent "
+variable = func(arg1,
+arg2,
+if cond
+statement()
+arg3
+else
+arg3
+end,
+arg4
+)" "
+variable = func(arg1,
+                arg2,
+                if cond
+                    statement()
+                    arg3
+                else
+                    arg3
+                end,
+                arg4
+                )"))
+
+(ert-deftest julia--test-indent-nested-block-inside-paren ()
+  "We should indent a nested block inside of a parenthetical."
+  (julia--should-indent "
+variable = func(
+arg1,
+if cond1
+statement()
+if cond2
+statement()
+end
+arg3
+end,
+arg4
+)" "
+variable = func(
+    arg1,
+    if cond1
+        statement()
+        if cond2
+            statement()
+        end
+        arg3
+    end,
+    arg4
+)"))
+
+(ert-deftest julia--test-indent-block-next-to-paren ()
+  (julia--should-indent "
+var = func(begin
+test
+end
+)" "
+var = func(begin
+               test
+           end
+           )"))
+
 ;;; font-lock tests
 
 (ert-deftest julia--test-symbol-font-locking-at-bol ()

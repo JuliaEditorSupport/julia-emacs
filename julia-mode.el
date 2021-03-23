@@ -459,7 +459,19 @@ Do not move back beyond MIN."
     (and pos
 	 (progn
 	   (goto-char pos)
-	   (+ julia-indent-offset (current-indentation))))))
+	   (+ julia-indent-offset (julia-block-open-indentation))))))
+
+(defun julia-block-open-indentation ()
+  "Get the current indentation or the start of a parenthetical block."
+  (save-excursion
+    (save-restriction
+      ;; narrow to one line to only search syntax on that line
+      (narrow-to-region (line-beginning-position) (line-end-position))
+        (condition-case nil
+            (progn
+              (backward-up-list)
+              (1+ (current-column)))
+          (error (current-indentation))))))
 
 (defcustom julia-max-block-lookback 20000
   "When indenting, don't look back more than this many characters
@@ -585,27 +597,27 @@ meaning always increase indent on TAB and decrease on S-TAB."
       ;; note: if this first function returns nil the beginning of the line
       ;; cannot be in a string
       (julia-indent-in-string)
-      ;; If we're inside an open paren, indent to line up arguments. After this,
-      ;; we cannot be inside parens which includes brackets
-      (julia-paren-indent)
       ;; indent due to hanging operators (lines ending in an operator)
       (julia-indent-hanging)
       ;; indent for import and export
       (julia-indent-import-export-using)
-      ;; Indent according to how many nested blocks we are in.
-      (save-excursion
-        (beginning-of-line)
-        ;; jump out of any comments
-        (let ((state (syntax-ppss)))
-          (when (nth 4 state)
-            (goto-char (nth 8 state))))
-        (forward-to-indentation 0)
-        (let ((endtok (julia-at-keyword julia-block-end-keywords))
-              (last-open-block (julia-last-open-block (- (point) julia-max-block-lookback))))
-          (max 0 (+ (or last-open-block 0)
-                    (if (or endtok
-                            (julia-at-keyword julia-block-start-keywords-no-indent))
-                        (- julia-indent-offset) 0)))))))
+      ;; use julia-paren-indent along with block indentation
+      (let ((paren-indent (or (julia-paren-indent) 0)))
+        ;; Indent according to how many nested blocks we are in.
+        (save-excursion
+          (beginning-of-line)
+          ;; jump out of any comments
+          (let ((state (syntax-ppss)))
+            (when (nth 4 state)
+              (goto-char (nth 8 state))))
+          (forward-to-indentation 0)
+          (let ((endtok (julia-at-keyword julia-block-end-keywords))
+                (last-open-block (julia-last-open-block (- (point) julia-max-block-lookback))))
+            (max paren-indent (- (or last-open-block paren-indent)
+                                 ;; subtract indentation if we're at the end of a block
+                                 (if (or endtok
+                                         (julia-at-keyword julia-block-start-keywords-no-indent))
+                                     julia-indent-offset 0))))))))
     ;; Point is now at the beginning of indentation, restore it
     ;; to its original position (relative to indentation).
     (when (>= point-offset 0)
