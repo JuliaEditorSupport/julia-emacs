@@ -1,5 +1,7 @@
 # Unreleased
 
+- Fix issue in keyword indentation with compound keywords ([#159](https://github.com/JuliaEditorSupport/julia-emacs/pull/159))
+
 # 0.4
 
 - increase lookback ([#98](https://github.com/JuliaEditorSupport/julia-emacs/pull/98)), fixes [#5](https://github.com/JuliaEditorSupport/julia-emacs/issues/5)
