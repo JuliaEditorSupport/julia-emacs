@@ -581,6 +581,34 @@ var = func(begin
            end
            )"))
 
+(ert-deftest julia--test-indent-block-compound-keywords ()
+  "We should indent on compound keywords inside a block."
+  (julia--should-indent "
+begin
+abstract type MyType end
+test
+end" "
+begin
+    abstract type MyType end
+    test
+end"))
+
+(ert-deftest julia--test-indent-block-compound-keywords-with-nesting ()
+  "We should indent on compound keywords and again inside them."
+  (julia--should-indent "
+begin
+abstract type MyType
+test1
+end
+test2
+end" "
+begin
+    abstract type MyType
+        test1
+    end
+    test2
+end"))
+
 ;;; font-lock tests
 
 (ert-deftest julia--test-symbol-font-locking-at-bol ()

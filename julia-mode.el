@@ -297,7 +297,11 @@
   (list "if" "while" "for" "begin" "try" "function" "let" "macro"
         "quote" "do" "module" "baremodule"
         ;; "immutable" "type" ;; remove after 0.6
-        "abstract type" "primitive type" "struct" "mutable struct"))
+        "struct"))
+
+;; For matching on keywords made up of two tokens
+(defconst julia-block-start-compound-keywords
+  (list "abstract type" "primitive type" "mutable struct"))
 
 ;; For keywords that begin a block without additional indentation
 (defconst julia-block-start-keywords-no-indent
@@ -400,6 +404,15 @@ a keyword if used as a field name, X.word, or quoted, :word."
            (not (julia-in-brackets)))
        (not (julia-in-comment))))
 
+
+(defun julia-at-compound-keyword (ckw-list)
+  "Return non-nil if point is at second word of a compound keyword."
+  (let ((compound-tail (current-word)))
+    (save-excursion
+      (backward-word 1)
+      (let ((compound-keyword (concat (current-word) " " compound-tail)))
+        (member compound-keyword ckw-list)))))
+
 ;; if backward-sexp gives an error, move back 1 char to move over the '('
 (defun julia-safe-backward-sexp ()
   (if (condition-case nil (backward-sexp) (error t))
@@ -442,6 +455,8 @@ Do not move back beyond position MIN."
         (julia-safe-backward-sexp)
         (setq nesting-count
               (cond ((julia-at-keyword julia-block-start-keywords)
+                     (+ nesting-count 1))
+                    ((julia-at-compound-keyword julia-block-start-compound-keywords)
                      (+ nesting-count 1))
                     ((julia-at-keyword '("end"))
                      (- nesting-count 1))
