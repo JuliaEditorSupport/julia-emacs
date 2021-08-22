@@ -860,7 +860,6 @@ following commands are defined:
 ;;;###autoload
 (defun inferior-julia ()
     "Run an inferior instance of julia inside Emacs."
-    (declare (obsolete "Use one of the maintained frontends" "2021-08-22"))
     (interactive)
     (let ((julia-program julia-program))
       (when (not (comint-check-proc "*Julia*"))
@@ -868,6 +867,9 @@ following commands are defined:
                julia-program nil julia-arguments))
       (pop-to-buffer-same-window "*Julia*")
       (inferior-julia-mode)))
+
+(make-obsolete 'inferior-julia
+               "REPL modes are now provided by various third-party packages, this will be removed.")
 
 (defun inferior-julia--initialize ()
     "Helper function to initialize `inferior-julia'."
