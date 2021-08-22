@@ -1,5 +1,7 @@
 # Unreleased
 
+- Generalise julia-indent-hanging to cover more cases ([#162](https://github.com/JuliaEditorSupport/julia-emacs/pull/162)), fixes [#155](https://github.com/JuliaEditorSupport/julia-emacs/issues/155)
+
 # 0.4
 
 - increase lookback ([#98](https://github.com/JuliaEditorSupport/julia-emacs/pull/98)), fixes [#5](https://github.com/JuliaEditorSupport/julia-emacs/issues/5)
