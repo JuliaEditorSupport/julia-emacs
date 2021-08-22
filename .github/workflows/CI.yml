@@ -1,0 +1,55 @@
+# uses https://github.com/leotaku/elisp-check for CI and
+# https://github.com/purcell/setup-emacs for Emacs setup
+
+name: check
+
+on:
+  pull_request:
+  push:
+    branches:
+      - master
+      - 'releases/*'
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        emacs_version:
+          - 25.1
+          - 25.2
+          - 25.3
+          - 26.1
+          - 26.2
+          - 26.3
+          - 27.1
+          - 27.2
+        ignore_warnings:
+          - true
+        include:
+          - emacs_version: snapshot
+            ignore_warnings: false
+    steps:
+    - uses: actions/checkout@v2
+    - uses: purcell/setup-emacs@master
+      with:
+        version: ${{ matrix.emacs_version }}
+    - name: Run ert
+      uses: leotaku/elisp-check@master
+      with:
+        check: ert
+        file: 'julia-mode-tests.el'
+        ignore_warnings: ${{ matrix.ignore_warnings }}
+    - name: Run package-lint
+      uses: leotaku/elisp-check@master
+      with:
+        file: "julia-model.el"
+        ignore_warnings: true
+        check: package-lint
+    - name: Run byte-compile
+      uses: leotaku/elisp-check@master
+      with:
+        file: "julia-mode.el"
+        ignore_warnings: true
+        check: byte-compile
