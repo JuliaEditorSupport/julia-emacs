@@ -54,16 +54,20 @@
        (should (equal (buffer-substring-no-properties (point-min) (point-max))
                       ,to)))))
 
-(defmacro julia--should-font-lock (text pos face)
-  "Assert that TEXT at position POS gets font-locked with FACE in `julia-mode'."
-  `(with-temp-buffer
+(defun julia--get-font-lock (text pos)
+  "Get the face of `text' at `pos' when font-locked as Julia code in this mode."
+  (with-temp-buffer
      (julia-mode)
-     (insert ,text)
+     (insert text)
      (if (fboundp 'font-lock-ensure)
          (font-lock-ensure (point-min) (point-max))
        (with-no-warnings
          (font-lock-fontify-buffer)))
-     (should (eq ,face (get-text-property ,pos 'face)))))
+     (get-text-property pos 'face)))
+
+(defmacro julia--should-font-lock (text pos face)
+  "Assert that TEXT at position POS gets font-locked with FACE in `julia-mode'."
+  `(should (eq ,face (julia--get-font-lock ,text ,pos))))
 
 (defmacro julia--should-move-point (text fun from to &optional end arg)
   "With TEXT in `julia-mode', after calling FUN, the point should move FROM\
@@ -720,15 +724,21 @@ var = func(begin
     (julia--should-font-lock s1 10 nil)))
 
 (ert-deftest julia--test-char-const-font-lock ()
-  (dolist (c '("'\\''" "'\\\"'" "'\\\\'" "'\\010'" "'\\xfe'" "'\\uabcd'" 
-               "'\\Uabcdef01'" "'\\n'" "'a'" "'z'" "'''"))
+  (dolist (c '("'\\''"
+               "'\\\"'"
+               "'\\\\'"
+               "'\\010'"
+               "'\\xfe'"
+               "'\\uabcd'"
+               "'\\Uabcdef01'"
+               "'\\n'"
+               "'a'" "'z'" "'''"))
     (let ((c (format " %s " c)))
       (progn
         (julia--should-font-lock c 1 nil)
         (julia--should-font-lock c 2 font-lock-string-face)
         (julia--should-font-lock c (- (length c) 1) font-lock-string-face)
-        (julia--should-font-lock c (length c) nil)
-    ))))
+        (julia--should-font-lock c (length c) nil)))))
 
 ;;; Movement
 (ert-deftest julia--test-beginning-of-defun-assn-1 ()
