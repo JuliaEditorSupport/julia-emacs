@@ -44,7 +44,7 @@ jobs:
     - name: Run package-lint
       uses: leotaku/elisp-check@master
       with:
-        file: "julia-model.el"
+        file: "julia-mode.el"
         ignore_warnings: true
         check: package-lint
     - name: Run byte-compile
