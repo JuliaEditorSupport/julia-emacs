@@ -486,6 +486,119 @@ identity"
 a = \"#\" # |>
 identity"))
 
+(ert-deftest julia--test-indent-complex-hanging ()
+  "Test indentation in more complex hanging indentation situations."
+  (julia--should-indent
+   "
+sample = @pipe leftjoin(df1, df2, on = [:longname1, :longname2]) |>
+do_stuff
+"
+   "
+sample = @pipe leftjoin(df1, df2, on = [:longname1, :longname2]) |>
+    do_stuff
+")
+  (julia--should-indent
+   "
+sample = @pipe leftjoin(df1, df2, on = [:longname1, :longname2]) |>
+op1 |>
+op2 |>
+op3
+"
+   "
+sample = @pipe leftjoin(df1, df2, on = [:longname1, :longname2]) |>
+    op1 |>
+    op2 |>
+    op3
+")
+  (julia--should-indent
+   "
+sample = @pipe leftjoin(df1, df2, on = [:longname1, :longname2,
+:longname3, :longname4]) |>
+do_stuff
+"
+   "
+sample = @pipe leftjoin(df1, df2, on = [:longname1, :longname2,
+                                        :longname3, :longname4]) |>
+    do_stuff
+")
+  (julia--should-indent
+   "
+sample = @pipe leftjoin(df1, df2, on = [:longname1, :longname2,
+:longnameA, :longnameB,
+:longnameC, :longnameD,
+:longnameE, :longnameF,
+:longname3, :longname4]) |>
+do_stuff
+"
+   "
+sample = @pipe leftjoin(df1, df2, on = [:longname1, :longname2,
+                                        :longnameA, :longnameB,
+                                        :longnameC, :longnameD,
+                                        :longnameE, :longnameF,
+                                        :longname3, :longname4]) |>
+    do_stuff
+")
+  (julia--should-indent
+   "
+sample2 = @pipe leftjoin(df1, df2, on = [:longname1, :longname2,
+:longname3, :longname4
+:longname5, :longname5]) |>
+do_stuff
+"
+   "
+sample2 = @pipe leftjoin(df1, df2, on = [:longname1, :longname2,
+                                         :longname3, :longname4
+                                         :longname5, :longname5]) |>
+    do_stuff
+")
+  (julia--should-indent
+   "
+sample3 =
+@pipe leftjoin(df1, df2, on = [:longname1,
+:longname2, :longname3, :longname4]) |>
+do_stuff
+"
+   "
+sample3 =
+    @pipe leftjoin(df1, df2, on = [:longname1,
+                                   :longname2, :longname3, :longname4]) |>
+    do_stuff
+")
+  (julia--should-indent
+   "
+sample4 =
+@pipe leftjoin(df1,
+df2, on = [:longname1, :longname2,
+:longname3, :longname4]) |>
+do_stuff
+"
+   "
+sample4 =
+    @pipe leftjoin(df1,
+                   df2, on = [:longname1, :longname2,
+                              :longname3, :longname4]) |>
+    do_stuff
+")
+  (julia--should-indent
+   "
+begin
+begin
+temporary = @pipe leftjoin(df1, df2, on = [:longname1, :longname2,
+ :longname3, :longname4]) |>
+op
+end
+end
+"
+   "
+begin
+    begin
+        temporary = @pipe leftjoin(df1, df2, on = [:longname1, :longname2,
+                                                   :longname3, :longname4]) |>
+            op
+    end
+end
+"))
+
 (ert-deftest julia--test-indent-quoted-single-quote ()
   "We should indent after seeing a character constant containing a single quote character."
   (julia--should-indent "
