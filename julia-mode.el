@@ -860,6 +860,7 @@ following commands are defined:
 ;;;###autoload
 (defun inferior-julia ()
     "Run an inferior instance of julia inside Emacs."
+    (declare (obsolete "Use one of the maintained frontends" "2021-08-22"))
     (interactive)
     (let ((julia-program julia-program))
       (when (not (comint-check-proc "*Julia*"))
