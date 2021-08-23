@@ -869,7 +869,8 @@ following commands are defined:
       (inferior-julia-mode)))
 
 (make-obsolete 'inferior-julia
-               "REPL modes are now provided by various third-party packages, this will be removed.")
+               "REPL modes are now provided by various third-party packages, this will be removed."
+               "2021-08-30")
 
 (defun inferior-julia--initialize ()
     "Helper function to initialize `inferior-julia'."
