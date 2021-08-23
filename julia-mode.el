@@ -556,12 +556,13 @@ operators (operators that end the previous line) as defined in
 The algorithm scans previous rows, keeping track of their
 indentation, until it reaches 0 indentation or has seen two
 hanging operators."
-  (let ((prev-indent) (prev-paren-indent) (hanging-match) (double-hanging) (best-indent))
-    (save-excursion
-      (when (> (julia-prev-line-skip-blank-or-comment) 0)
-        (setq prev-indent (current-indentation))
-        (setq prev-paren-indent (julia-paren-indent))
-        (setq hanging-match (julia--hanging-operator-p))
+  (save-excursion
+    (when (> (julia-prev-line-skip-blank-or-comment) 0)
+      (let* ((prev-indent (current-indentation))
+             (prev-paren-indent (julia-paren-indent))
+             (hanging-match (julia--hanging-operator-p))
+             (double-hanging)
+             (best-indent))
         ;; Base case: one preceding hanging operator => increase indent from preceding line
         (if hanging-match
             (setq best-indent (+ (current-indentation) julia-indent-offset)))
@@ -572,15 +573,14 @@ hanging operators."
                     (> (julia-prev-line-skip-blank-or-comment) 0))
           (setq double-hanging (julia--hanging-operator-p))
           ;; Special case: two hanging operator indents already => use the first one
-          (if double-hanging
-              (setq best-indent prev-indent))
+          (when double-hanging
+            (setq best-indent prev-indent))
           ;; Special case: open paren followed by one hanging operator
-          (if (and (not double-hanging)
-                   prev-paren-indent)
-              (setq best-indent (+ (current-indentation) julia-indent-offset)))
+          (when (and (not double-hanging) prev-paren-indent)
+            (setq best-indent (+ (current-indentation) julia-indent-offset)))
           (setq prev-indent (current-indentation))
-          (setq prev-paren-indent (julia-paren-indent))))
-      best-indent)))
+          (setq prev-paren-indent (julia-paren-indent)))
+        best-indent))))
 
 (defun julia-indent-in-string ()
   "Indentation inside strings with newlines is \"manual\",
