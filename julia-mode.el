@@ -428,6 +428,8 @@ symbol, gives up when this is not true."
             (setf module (match-string-no-properties 1))))
          ((looking-at (rx (* (or word (syntax symbol))) (0+ space) ","))
           (when module (setf done 'broken)))
+         ((looking-at (rx (* (or word (syntax symbol))) "."))
+          (setf module (concat (match-string-no-properties 0) module)))
          (t (setf done 'broken)))))
     (if (eq done 'broken)
         nil
