@@ -1,6 +1,6 @@
 # julia-mode
 
-![julia-emacs julia-mode logo](logo.png)
+![julia-emacs julia-mode logo](./logo/julia-emacs-logo.svg)
 
 [![MELPA](https://melpa.org/packages/julia-mode-badge.svg)](https://melpa.org/#/julia-mode)
 [![Build Status](https://travis-ci.org/JuliaEditorSupport/julia-emacs.svg?branch=master)](https://travis-ci.org/JuliaEditorSupport/julia-emacs)

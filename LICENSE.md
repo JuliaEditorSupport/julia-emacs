@@ -23,3 +23,21 @@ The julia-emacs plugin is licensed under the MIT License.
 > LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
 > OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
 > WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+
+The julia-emacs logo is licensed under the Creative Commons 
+["BY-NC-SA" 4.0](https://creativecommons.org/licenses/by-nc-sa/4.0/) License.
+
+> Copyright 2021: Antti Halme, and other contributors:
+>
+> https://github.com/JuliaLang/julia-emacs/contributors
+>
+> The julia-emacs logo is inspired the logos of the Julia and Emacs projects:
+>
+> Julia logo
+> - Copyright 2012-2019: Stefan Karpinski <stefan@karpinski.org>.
+> - CC "BY-NC-SA" 4.0
+> - https://github.com/JuliaLang/julia-logo-graphics/
+>
+> Emacs logo
+> - Copyright 2021: Nicolas Petton <nicolas@petton.fr>
+> - CC "BY-NC-SA" 4.0 (separately licensed)

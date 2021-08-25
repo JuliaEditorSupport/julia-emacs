@@ -1,0 +1,7 @@
+name = "JuliaEmacsLogo"
+uuid = "505e8864-99c8-4bb2-a01c-4992ef1b50c0"
+authors = ["Antti Halme <antti.halme@iki.fi>"]
+version = "0.1.0"
+
+[deps]
+Luxor = "ae8d54c2-7ccd-5906-9d76-62fc9837b5bc"
