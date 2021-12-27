@@ -804,6 +804,15 @@ strings."
               (goto-char orig-pt))))
       (goto-char orig-pt))))
 
+(defun julia-bol ()
+  "Goes to the beginning of line, then skips past the prompt, if any."
+  (interactive)
+  (beginning-of-line)
+  (let ((eol (line-end-position)))
+    (if (and (looking-at julia-prompt-regexp)
+	     (<= (match-end 0) eol))
+	(goto-char (match-end 0)))))
+
 (defun julia-latexsub-or-indent (arg)
   "Either indent according to mode or perform a LaTeX-like symbol substution"
   (interactive "*i")
@@ -856,6 +865,7 @@ following commands are defined:
   (let ((map2 (nconc (make-sparse-keymap) comint-mode-map)))
     ;; example definition
     (define-key map2 (kbd "TAB") 'julia-latexsub-or-indent)
+    (define-key map2 (kbd "C-a") 'julia-bol)
     map2)
   "Basic mode map for `inferior-julia-mode'.")
 
