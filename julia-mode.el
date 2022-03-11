@@ -189,8 +189,8 @@
 (defconst julia-unquote-regex
   "\\(\\s(\\|\\s-\\|-\\|[,%=<>\\+*/?&|!\\^~\\\\;:]\\|^\\)\\($[a-zA-Z0-9_]+\\)")
 
-(defconst julia-forloop-in-regex
-  "for +.*[^
+(defconst julia-in-regex
+  " +.*[^
 ].* \\(in\\)\\(\\s-\\|$\\)+")
 
 (defconst julia--forloop-=-regex
@@ -282,7 +282,7 @@
     'font-lock-constant-face)
    (cons "ccall" 'font-lock-builtin-face)
    (list julia-unquote-regex 2 'font-lock-constant-face)
-   (list julia-forloop-in-regex 1 'font-lock-keyword-face)
+   (list julia-in-regex 1 'font-lock-keyword-face)
    (list julia--forloop-=-regex 1 'font-lock-keyword-face)
    (list julia-ternary-regex (list 1 'font-lock-keyword-face) (list 2 'font-lock-keyword-face))
    (list julia-function-regex 1 'font-lock-function-name-face)
