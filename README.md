@@ -18,7 +18,7 @@ Unless you want to develop this package, it is recommended that you use it from 
 
 ```elisp
 (package-install 'julia-mode)
-(require 'julia-mode)`
+(require 'julia-mode)
 ```
 
 ### Installing from Source
