@@ -49,6 +49,7 @@
 
 (defcustom julia-indent-offset 4
   "Number of spaces per indentation level."
+  :safe (lambda (n) (and (> n 1) (<= n 8)))
   :type 'integer)
 
 (defface julia-macro-face
