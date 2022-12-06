@@ -741,6 +741,12 @@ Return nil if point is not in a function, otherwise point."
       (end-of-line)
       (point))))
 
+;;; abbrev
+
+(define-abbrev-table 'julia-mode-abbrev-table ()
+  "Abbrev table for Julia mode."
+  :parents (list julia-latexsub-abbrev-table))
+
 ;;; IMENU
 (defvar julia-imenu-generic-expression
   ;; don't use syntax classes, screws egrep
