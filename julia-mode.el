@@ -758,6 +758,7 @@ Return nil if point is not in a function, otherwise point."
 (define-derived-mode julia-mode prog-mode "Julia"
   "Major mode for editing julia code."
   :group 'julia
+  :abbrev-table julia-mode-abbrev-table
   (set-syntax-table julia-mode-syntax-table)
   (setq-local comment-start "# ")
   (setq-local comment-start-skip "#+\\s-*")
@@ -927,6 +928,7 @@ following commands are defined:
 
 \\<inferior-julia-mode-map>"
   nil "Julia"
+  :abbrev-table julia-mode-abbrev-table
   (setq-local comint-prompt-regexp julia-prompt-regexp)
   (setq-local comint-prompt-read-only t)
   (setq-local font-lock-defaults '(julia-font-lock-keywords t))
