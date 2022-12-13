@@ -38,6 +38,7 @@
 
 (require 'cl-lib)
 (require 'julia-mode-latexsubs)
+(eval-when-compile (require 'subr-x))
 
 (defvar julia-mode-hook nil)
 
@@ -868,10 +869,23 @@ buffer where the LaTeX symbol starts."
         ;; `ivy-mode' always calls `:exit-function' with `sole' and not `finished' (see
         ;; <https://github.com/abo-abo/swiper/issues/2345>). Instead of automatic
         ;; expansion, user can either enable `abbrev-mode' or call `expand-abbrev'.
-        (when (eq status 'finished)
-          (abbrev-insert (abbrev-symbol name julia-latexsub-abbrev-table) name
-                         beg (point))))
+        (when-let (((eq status 'finished))
+                   (symb (abbrev-symbol name julia-latexsub-abbrev-table)))
+          (abbrev-insert symb name beg (point))))
     #'ignore))
+
+;; company-mode doesn't work via `indent-for-tab-command'. In order to have a consistent
+;; completion UI, we must dynamically choose between `company-indent-or-complete-common' and
+;; `indent-for-tab-command' based on whether `company-mode' is active.
+(with-eval-after-load 'company
+  (defun julia-company-indent-for-tab-command (arg)
+    "Call `indent-for-tab-command' or `company-indent-or-complete-common' as appropriate."
+    (interactive "P")
+    (if company-mode
+        (company-indent-or-complete-common arg)
+      (indent-for-tab-command arg)))
+  (define-key julia-mode-map [remap indent-for-tab-command]
+    #'julia-company-indent-for-tab-command))
 
 ;; Math insertion in julia. Use it with
 ;; (add-hook 'julia-mode-hook 'julia-math-mode)
