@@ -701,58 +701,48 @@ Return nil if point is not in a function, otherwise point."
       (point))))
 
 (defconst julia-imenu-private-multiline-fn
-  (rx-to-string
-   '(seq bol
-         (zero-or-more space)
-         (zero-or-one "@" (one-or-more alnum) space)
-         "function"
-         (one-or-more space)
-         (group "_" (minimal-match (zero-or-more anything)))
-         (or (seq (one-or-more space) "end") eol))))
+  (rx
+   bol (zero-or-more space)
+   (zero-or-one "@" (one-or-more alnum) space)
+   "function" (one-or-more space)
+   (group "_" (minimal-match (zero-or-more anything)))
+   (or (seq (one-or-more space) "end") eol)))
 
 (defconst julia-imenu-public-multiline-fn
-  (rx-to-string
-   '(seq bol
-         (zero-or-more space)
-         (zero-or-one "@" (one-or-more alnum) space)
-         "function"
-         (one-or-more space)
-         (group (not (any "_")) (zero-or-more not-newline)))))
+  (rx
+   bol (zero-or-more space)
+   (zero-or-one "@" (one-or-more alnum) space)
+   "function" (one-or-more space)
+   (group (not (any "_")) (zero-or-more not-newline))))
 
 (defconst julia-imenu-private-singleline-fn
-  (rx-to-string
-   '(seq bol
-         (zero-or-more space)
-         (zero-or-one "@" (one-or-more alnum) space)
-         (group "_"
-                (one-or-more (any "!" "." "_" alnum))
+  (rx
+   bol (zero-or-more space)
+   (zero-or-one "@" (one-or-more alnum) space)
+         (group "_" (one-or-more (any "!" "." "_" alnum))
                 "(" (minimal-match (zero-or-more not-newline)) ")")
-         (minimal-match (zero-or-more not-newline)) space "=" space)))
+         (minimal-match (zero-or-more not-newline)) space "=" space))
 
 (defconst julia-imenu-public-singleline-fn
-  (rx-to-string
-   '(seq line-start
-         (zero-or-more space)
-         (zero-or-one "@" (one-or-more alnum) space)
-         (group (any "!" "." alnum)
-                (zero-or-more (any "!" "." "_" alnum))
+  (rx
+   bol (zero-or-more space)
+   (zero-or-one "@" (one-or-more alnum) space)
+         (group (one-or-more (any "!" "." "_" alnum))
                 "(" (minimal-match (zero-or-more not-newline)) ")")
-         (minimal-match (zero-or-more not-newline)) space "=" space)))
+         (minimal-match (zero-or-more not-newline)) space "=" space))
 
 (defconst julia-imenu-const
-  (rx-to-string
-   '(seq bol
-         (zero-or-more space)
-         "const"
-         space
-         (group (one-or-more alnum))
-         (zero-or-more space) "=" space)))
+  (rx
+   bol (zero-or-more space)
+   "const" space
+   (group (one-or-more alnum)) (zero-or-more space)
+   "=" space))
 
 (defconst julia-imenu-struct
-  (rx-to-string
-   '(seq bol
-         (zero-or-more space)
-         (group (zero-or-one "mutable" space) "struct" space (one-or-more alnum)))))
+  (rx
+   bol (zero-or-more space)
+   (group (zero-or-one "mutable" space)
+          "struct" space (one-or-more alnum))))
 
 ;;; IMENU
 (defvar julia-imenu-generic-expression
