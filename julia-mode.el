@@ -700,37 +700,6 @@ Return nil if point is not in a function, otherwise point."
       (end-of-line)
       (point))))
 
-(defconst julia-imenu-private-multiline-fn
-  (rx
-   bol (zero-or-more space)
-   (zero-or-one "@" (one-or-more alnum) space)
-   "function" (one-or-more space)
-   (group "_" (minimal-match (zero-or-more anything)))
-   (or (seq (one-or-more space) "end") eol)))
-
-(defconst julia-imenu-public-multiline-fn
-  (rx
-   bol (zero-or-more space)
-   (zero-or-one "@" (one-or-more alnum) space)
-   "function" (one-or-more space)
-   (group (not (any "_")) (zero-or-more not-newline))))
-
-(defconst julia-imenu-private-singleline-fn
-  (rx
-   bol (zero-or-more space)
-   (zero-or-one "@" (one-or-more alnum) space)
-         (group "_" (one-or-more (any "!" "." "_" alnum))
-                "(" (minimal-match (zero-or-more not-newline)) ")")
-         (minimal-match (zero-or-more not-newline)) space "=" space))
-
-(defconst julia-imenu-public-singleline-fn
-  (rx
-   bol (zero-or-more space)
-   (zero-or-one "@" (one-or-more alnum) space)
-         (group (one-or-more (any "!" "." "_" alnum))
-                "(" (minimal-match (zero-or-more not-newline)) ")")
-         (minimal-match (zero-or-more not-newline)) space "=" space))
-
 (defconst julia-imenu-const
   (rx
    bol (zero-or-more space)
@@ -738,21 +707,13 @@ Return nil if point is not in a function, otherwise point."
    (group (one-or-more alnum)) (zero-or-more space)
    "=" space))
 
-(defconst julia-imenu-struct
-  (rx
-   bol (zero-or-more space)
-   (group (zero-or-one "mutable" space)
-          "struct" space (one-or-more alnum))))
-
 ;;; IMENU
 (defvar julia-imenu-generic-expression
   ;; don't use syntax classes, screws egrep
-  `(("Function" ,julia-imenu-public-multiline-fn 1)
-    ("Function" ,julia-imenu-public-singleline-fn 1)
-    ("Function (_)" ,julia-imenu-private-multiline-fn 1)
-    ("Function (_)" ,julia-imenu-private-singleline-fn 1)
+  `(("Function" ,julia-function-regex 1)
+    ("Function" ,julia-function-assignment-regex 1)
     ("Const" ,julia-imenu-const 1)
-    ("Struct" ,julia-imenu-struct 1)
+    ("Struct" ,julia-type-regex 1)
     ("Require" " *\\(\\brequire\\)(\\([^ \t\n)]*\\)" 2)
     ("Include" " *\\(\\binclude\\)(\\([^ \t\n)]*\\)" 2)
     ;; ("Classes" "^.*setClass(\\(.*\\)," 1)
