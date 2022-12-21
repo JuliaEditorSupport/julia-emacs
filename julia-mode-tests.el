@@ -54,16 +54,20 @@
        (should (equal (buffer-substring-no-properties (point-min) (point-max))
                       ,to)))))
 
-(defmacro julia--should-font-lock (text pos face)
-  "Assert that TEXT at position POS gets font-locked with FACE in `julia-mode'."
-  `(with-temp-buffer
+(defun julia--get-font-lock (text pos)
+  "Get the face of `text' at `pos' when font-locked as Julia code in this mode."
+  (with-temp-buffer
      (julia-mode)
-     (insert ,text)
+     (insert text)
      (if (fboundp 'font-lock-ensure)
          (font-lock-ensure (point-min) (point-max))
        (with-no-warnings
          (font-lock-fontify-buffer)))
-     (should (eq ,face (get-text-property ,pos 'face)))))
+     (get-text-property pos 'face)))
+
+(defmacro julia--should-font-lock (text pos face)
+  "Assert that TEXT at position POS gets font-locked with FACE in `julia-mode'."
+  `(should (eq ,face (julia--get-font-lock ,text ,pos))))
 
 (defmacro julia--should-move-point (text fun from to &optional end arg)
   "With TEXT in `julia-mode', after calling FUN, the point should move FROM\
@@ -87,6 +91,8 @@ matching line or end of match if END is non-nil.  Optional ARG is passed to FUN.
                                       (goto-char (match-beginning 0))
                                       (point-at-bol)))
                            ,to)))))
+
+;;; indent tests
 
 (ert-deftest julia--test-indent-if ()
   "We should indent inside if bodies."
@@ -384,6 +390,15 @@ notpartofit"
    "using Foo: bar ,
     baz,
     quux
+notpartofit")
+  (julia--should-indent
+   "using Foo.Bar: bar ,
+baz,
+quux
+notpartofit"
+   "using Foo.Bar: bar ,
+    baz,
+    quux
 notpartofit"))
 
 (ert-deftest julia--test-indent-anonymous-function ()
@@ -451,6 +466,135 @@ end"
     r = 1
 end")
   )
+
+(ert-deftest julia--test-indent-hanging ()
+  "Test indentation for line following a hanging operator."
+  (julia--should-indent
+   "
+f(x) =
+x*
+x"
+   "
+f(x) =
+    x*
+    x")
+  (julia--should-indent
+   "
+a = \"#\" |>
+identity"
+   "
+a = \"#\" |>
+    identity")
+  ;; make sure we don't interpret a hanging operator in a comment as
+  ;; an actual hanging operator for indentation
+  (julia--should-indent
+   "
+a = \"#\" # |>
+identity"
+   "
+a = \"#\" # |>
+identity"))
+
+(ert-deftest julia--test-indent-quoted-single-quote ()
+  "We should indent after seeing a character constant containing a single quote character."
+  (julia--should-indent "
+if c in ('\'')
+s = \"$c$c\"*string[startpos:pos]
+end
+" "
+if c in ('\'')
+    s = \"$c$c\"*string[startpos:pos]
+end
+"))
+
+(ert-deftest julia--test-indent-block-inside-paren ()
+  "We should indent a block inside of a parenthetical."
+  (julia--should-indent "
+variable = func(
+arg1,
+arg2,
+if cond
+statement()
+arg3
+else
+arg3
+end,
+arg4
+)" "
+variable = func(
+    arg1,
+    arg2,
+    if cond
+        statement()
+        arg3
+    else
+        arg3
+    end,
+    arg4
+)"))
+
+(ert-deftest julia--test-indent-block-inside-hanging-paren ()
+  "We should indent a block inside of a hanging parenthetical."
+  (julia--should-indent "
+variable = func(arg1,
+arg2,
+if cond
+statement()
+arg3
+else
+arg3
+end,
+arg4
+)" "
+variable = func(arg1,
+                arg2,
+                if cond
+                    statement()
+                    arg3
+                else
+                    arg3
+                end,
+                arg4
+                )"))
+
+(ert-deftest julia--test-indent-nested-block-inside-paren ()
+  "We should indent a nested block inside of a parenthetical."
+  (julia--should-indent "
+variable = func(
+arg1,
+if cond1
+statement()
+if cond2
+statement()
+end
+arg3
+end,
+arg4
+)" "
+variable = func(
+    arg1,
+    if cond1
+        statement()
+        if cond2
+            statement()
+        end
+        arg3
+    end,
+    arg4
+)"))
+
+(ert-deftest julia--test-indent-block-next-to-paren ()
+  (julia--should-indent "
+var = func(begin
+test
+end
+)" "
+var = func(begin
+               test
+           end
+           )"))
+
+;;; font-lock tests
 
 (ert-deftest julia--test-symbol-font-locking-at-bol ()
   "Symbols get font-locked at beginning or line."
@@ -532,6 +676,79 @@ end")
     (julia--should-font-lock string 74 font-lock-type-face) ; B
     ))
 
+(ert-deftest julia--test-single-quote-string-font-lock ()
+  "Test that single quoted strings are font-locked correctly even with escapes."
+  ;; Issue #15
+  (let ((s1 "\"a\\\"b\"c"))
+    (julia--should-font-lock s1 2 font-lock-string-face)
+    (julia--should-font-lock s1 5 font-lock-string-face)
+    (julia--should-font-lock s1 7 nil)))
+
+(ert-deftest julia--test-triple-quote-string-font-lock ()
+  "Test that triple quoted strings are font-locked correctly even with escapes."
+  ;; Issue #15
+  (let ((s1 "\"\"\"a\\\"\\\"\"b\"\"\"d")
+        (s2 "\"\"\"a\\\"\"\"b\"\"\"d")
+        (s3 "\"\"\"a```b\"\"\"d")
+        (s4 "\\\"\"\"a\\\"\"\"b\"\"\"d")
+        (s5 "\"\"\"a\\\"\"\"\"b"))
+    (julia--should-font-lock s1 4 font-lock-string-face)
+    (julia--should-font-lock s1 10 font-lock-string-face)
+    (julia--should-font-lock s1 14 nil)
+    (julia--should-font-lock s2 4 font-lock-string-face)
+    (julia--should-font-lock s2 9 font-lock-string-face)
+    (julia--should-font-lock s2 13 nil)
+    (julia--should-font-lock s3 4 font-lock-string-face)
+    (julia--should-font-lock s3 8 font-lock-string-face)
+    (julia--should-font-lock s3 12 nil)
+    (julia--should-font-lock s4 5 font-lock-string-face)
+    (julia--should-font-lock s4 10 font-lock-string-face)
+    (julia--should-font-lock s4 14 nil)
+    (julia--should-font-lock s5 4 font-lock-string-face)
+    (julia--should-font-lock s5 10 nil)))
+
+(ert-deftest julia--test-triple-quote-cmd-font-lock ()
+  "Test that triple-quoted cmds are font-locked correctly even with escapes."
+  (let ((s1 "```a\\`\\``b```d")
+        (s2 "```a\\```b```d")
+        (s3 "```a\"\"\"b```d")
+        (s4 "\\```a\\```b```d"))
+    (julia--should-font-lock s1 4 font-lock-string-face)
+    (julia--should-font-lock s1 10 font-lock-string-face)
+    (julia--should-font-lock s1 14 nil)
+    (julia--should-font-lock s2 4 font-lock-string-face)
+    (julia--should-font-lock s2 9 font-lock-string-face)
+    (julia--should-font-lock s2 13 nil)
+    (julia--should-font-lock s3 4 font-lock-string-face)
+    (julia--should-font-lock s3 8 font-lock-string-face)
+    (julia--should-font-lock s3 12 nil)
+    (julia--should-font-lock s4 5 font-lock-string-face)
+    (julia--should-font-lock s4 10 font-lock-string-face)
+    (julia--should-font-lock s4 14 nil)))
+
+(ert-deftest julia--test-ccall-font-lock ()
+  (let ((s1 "t = ccall(:clock, Int32, ())"))
+    (julia--should-font-lock s1 5 font-lock-builtin-face)
+    (julia--should-font-lock s1 4 nil)
+    (julia--should-font-lock s1 10 nil)))
+
+(ert-deftest julia--test-char-const-font-lock ()
+  (dolist (c '("'\\''"
+               "'\\\"'"
+               "'\\\\'"
+               "'\\010'"
+               "'\\xfe'"
+               "'\\uabcd'"
+               "'\\Uabcdef01'"
+               "'\\n'"
+               "'a'" "'z'" "'''"))
+    (let ((c (format " %s " c)))
+      (progn
+        (julia--should-font-lock c 1 nil)
+        (julia--should-font-lock c 2 font-lock-string-face)
+        (julia--should-font-lock c (- (length c) 1) font-lock-string-face)
+        (julia--should-font-lock c (length c) nil)))))
+
 (ert-deftest julia--test-const-def-font-lock ()
   (let ((string "const foo = \"bar\""))
     (julia--should-font-lock string 1 font-lock-keyword-face) ; const
@@ -551,8 +768,8 @@ end")
   "Point moves to beginning of multi-line assignment function."
   (julia--should-move-point
     "f(x)=
-x*
-x" 'beginning-of-defun "\\*\nx" 1))
+    x*
+    x" 'beginning-of-defun "x$" 1))
 
 (ert-deftest julia--test-beginning-of-defun-assn-3 ()
   "Point moves to beginning of multi-line assignment function adjoining
@@ -704,6 +921,14 @@ hello world
     ;; If triple-quoted strings improperly syntax-propertized as 3
     ;; single-quoted strings, this will show string starting at pos 3
     ;; instead of 1.
+    (should (= 1 (nth 8 (syntax-ppss 5))))))
+
+(ert-deftest julia--test-triple-quoted-cmd-syntax ()
+  (with-temp-buffer
+    (julia-mode)
+    (insert "```
+hello world
+```")
     (should (= 1 (nth 8 (syntax-ppss 5))))))
 
 (ert-deftest julia--test-backslash-syntax ()

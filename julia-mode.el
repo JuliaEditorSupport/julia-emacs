@@ -45,22 +45,20 @@
   "Major mode for the julia programming language."
   :group 'languages
   :prefix "julia-")
+;; all custom variables are automatically added to the most recent defgroup
 
 (defcustom julia-indent-offset 4
   "Number of spaces per indentation level."
-  :type 'integer
-  :group 'julia)
+  :safe (lambda (n) (and (> n 1) (<= n 8)))
+  :type 'integer)
 
 (defface julia-macro-face
   '((t :inherit font-lock-preprocessor-face))
-  "Face for Julia macro invocations."
-  :group 'julia-mode)
+  "Face for Julia macro invocations.")
 
 (defface julia-quoted-symbol-face
   '((t :inherit font-lock-constant-face))
-  "Face for quoted Julia symbols, e.g. :foo."
-  :group 'julia-mode)
-
+  "Face for quoted Julia symbols, e.g. :foo.")
 
 ;;;###autoload
 (add-to-list 'auto-mode-alist '("\\.jl\\'" . julia-mode))
@@ -112,76 +110,82 @@
             (syntax open-parenthesis)
             (syntax whitespace)
             bol)
-        (group "'")
-        (group
-         (or (repeat 0 8 (not (any "'"))) (not (any "\\"))
-             "\\\\"))
-        (group "'"))))
+        (group "'")        ; start single quote of character constant
+        (or                ; two alternatives
+         (not (any "\\"))  ; one character, not backslash
+	     (seq "\\"         ; sequence of a backslash followed by ...
+              (or          ; five alternatives
+               (any "\\'\"abfnrtv")          ; single character escape
+               (repeat 1 3 (any "0-7"))      ; octal escape
+               (seq "x" (repeat 1 2 hex))    ; hex escape
+               (seq "u" (repeat 1 4 hex))    ; unicode escape
+               (seq "U" (repeat 1 8 hex))))) ; extended unicode escape
+        (group "'"))))     ; end single quote of character constant
 
 (defconst julia-hanging-operator-regexp
   ;; taken from julia-parser.scm
-  (concat "^[^#\n]+ "
-          (regexp-opt
-           '( ;; conditional
-             "?"
-             ;; assignment
-             "=" ":=" "+=" "-=" "*=" "/=" "//=" ".//=" ".*=" "./=" "\\=" ".\\="
-             "^=" ".^=" "÷=" ".÷=" "%=" ".%=" "|=" "&=" "$=" "=>" "<<=" ">>="
-             ">>>=" "~" ".+=" ".-="
-             ;; arrow
-             "--" "-->" "←" "→" "↔" "↚" "↛" "↠" "↣" "↦" "↮" "⇎" "⇏" "⇒" "⇔" "⇴"
-             "⇶" "⇷" "⇸" "⇹" "⇺" "⇻" "⇼" "⇽" "⇾" "⇿" "⟵" "⟶" "⟷" "⟷" "⟹"
-             "⟺" "⟻" "⟼" "⟽" "⟾" "⟿" "⤀" "⤁" "⤂" "⤃" "⤄" "⤅" "⤆" "⤇" "⤌"
-             "⤍" "⤎" "⤏" "⤐" "⤑" "⤔" "⤕" "⤖" "⤗" "⤘" "⤝" "⤞" "⤟" "⤠" "⥄" "⥅"
-             "⥆" "⥇" "⥈" "⥊" "⥋" "⥎" "⥐" "⥒" "⥓" "⥖" "⥗" "⥚" "⥛" "⥞" "⥟" "⥢"
-             "⥤" "⥦" "⥧" "⥨" "⥩" "⥪" "⥫" "⥬" "⥭" "⥰" "⧴" "⬱" "⬰" "⬲" "⬳" "⬴"
-             "⬵" "⬶" "⬷" "⬸" "⬹" "⬺" "⬻" "⬼" "⬽" "⬾" "⬿" "⭀" "⭁" "⭂" "⭃" "⭄"
-             "⭇" "⭈" "⭉" "⭊" "⭋" "⭌" "￩" "￫"
-             ;; or and and
-             "&&" "||"
-             ;; comparison
-             ">" "<" ">=" "≥" "<=" "≤" "==" "===" "≡" "!=" "≠" "!==" "≢" ".>"
-             ".<" ".>=" ".≥" ".<=" ".≤" ".==" ".!=" ".≠" ".=" ".!" "<:" ">:" "∈"
-             "∉" "∋" "∌" "⊆" "⊈" "⊂" "⊄" "⊊" "∝" "∊" "∍" "∥" "∦" "∷" "∺" "∻" "∽"
-             "∾" "≁" "≃" "≄" "≅" "≆" "≇" "≈" "≉" "≊" "≋" "≌" "≍" "≎" "≐" "≑" "≒"
-             "≓" "≔" "≕" "≖" "≗" "≘" "≙" "≚" "≛" "≜" "≝" "≞" "≟" "≣" "≦" "≧" "≨"
-             "≩" "≪" "≫" "≬" "≭" "≮" "≯" "≰" "≱" "≲" "≳" "≴" "≵" "≶" "≷" "≸" "≹"
-             "≺" "≻" "≼" "≽" "≾" "≿" "⊀" "⊁" "⊃" "⊅" "⊇" "⊉" "⊋" "⊏" "⊐" "⊑" "⊒"
-             "⊜" "⊩" "⊬" "⊮" "⊰" "⊱" "⊲" "⊳" "⊴" "⊵" "⊶" "⊷" "⋍" "⋐" "⋑" "⋕" "⋖"
-             "⋗" "⋘" "⋙" "⋚" "⋛" "⋜" "⋝" "⋞" "⋟" "⋠" "⋡" "⋢" "⋣" "⋤" "⋥" "⋦" "⋧"
-             "⋨" "⋩" "⋪" "⋫" "⋬" "⋭" "⋲" "⋳" "⋴" "⋵" "⋶" "⋷" "⋸" "⋹" "⋺" "⋻" "⋼"
-             "⋽" "⋾" "⋿" "⟈" "⟉" "⟒" "⦷" "⧀" "⧁" "⧡" "⧣" "⧤" "⧥" "⩦" "⩧" "⩪" "⩫"
-             "⩬" "⩭" "⩮" "⩯" "⩰" "⩱" "⩲" "⩳" "⩴" "⩵" "⩶" "⩷" "⩸" "⩹" "⩺" "⩻" "⩼"
-             "⩽" "⩾" "⩿" "⪀" "⪁" "⪂" "⪃" "⪄" "⪅" "⪆" "⪇" "⪈" "⪉" "⪊" "⪋" "⪌" "⪍"
-             "⪎" "⪏" "⪐" "⪑" "⪒" "⪓" "⪔" "⪕" "⪖" "⪗" "⪘" "⪙" "⪚" "⪛" "⪜" "⪝" "⪞"
-             "⪟" "⪠" "⪡" "⪢" "⪣" "⪤" "⪥" "⪦" "⪧" "⪨" "⪩" "⪪" "⪫" "⪬" "⪭" "⪮" "⪯"
-             "⪰" "⪱" "⪲" "⪳" "⪴" "⪵" "⪶" "⪷" "⪸" "⪹" "⪺" "⪻" "⪼" "⪽" "⪾" "⪿" "⫀"
-             "⫁" "⫂" "⫃" "⫄" "⫅" "⫆" "⫇" "⫈" "⫉" "⫊" "⫋" "⫌" "⫍" "⫎" "⫏" "⫐" "⫑"
-             "⫒" "⫓" "⫔" "⫕" "⫖" "⫗" "⫘" "⫙" "⫷" "⫸" "⫹" "⫺" "⊢" "⊣"
-             ;; pipe, colon
-             "|>" "<|" ":" ".."
-             ;; plus
-             "+" "-" "⊕" "⊖" "⊞" "⊟" ".+" ".-" "++" "|" "∪" "∨" "$" "⊔" "±" "∓"
-             "∔" "∸" "≂" "≏" "⊎" "⊻" "⊽" "⋎" "⋓" "⧺" "⧻" "⨈" "⨢" "⨣" "⨤" "⨥" "⨦"
-             "⨧" "⨨" "⨩" "⨪" "⨫" "⨬" "⨭" "⨮" "⨹" "⨺" "⩁" "⩂" "⩅" "⩊" "⩌" "⩏" "⩐"
-             "⩒" "⩔" "⩖" "⩗" "⩛" "⩝" "⩡" "⩢" "⩣"
-             ;; bitshift
-             "<<" ">>" ">>>" ".<<" ".>>" ".>>>"
-             ;; times
-             "*" "/" "./" "÷" ".÷" "%" "⋅" "∘" "×" ".%" ".*" "\\"
-             ".\\" "&" "∩" "∧" "⊗" "⊘" "⊙" "⊚" "⊛" "⊠" "⊡" "⊓" "∗" "∙" "∤" "⅋"
-             "≀" "⊼" "⋄" "⋆" "⋇" "⋉" "⋊" "⋋" "⋌" "⋏" "⋒" "⟑" "⦸" "⦼" "⦾" "⦿" "⧶"
-             "⧷" "⨇" "⨰" "⨱" "⨲" "⨳" "⨴" "⨵" "⨶" "⨷" "⨸" "⨻" "⨼" "⨽" "⩀" "⩃" "⩄"
-             "⩋" "⩍" "⩎" "⩑" "⩓" "⩕" "⩘" "⩚" "⩜" "⩞" "⩟" "⩠" "⫛" "⊍" "▷" "⨝" "⟕"
-             "⟖" "⟗"
-             ;; rational
-             "//" ".//"
-             ;; power
-             "^" ".^" "↑" "↓" "⇵" "⟰" "⟱" "⤈" "⤉" "⤊" "⤋" "⤒" "⤓" "⥉" "⥌" "⥍"
-             "⥏" "⥑" "⥔" "⥕" "⥘" "⥙" "⥜" "⥝" "⥠" "⥡" "⥣" "⥥" "⥮" "⥯" "￪" "￬"
-             ;; decl, dot
-             "::" "."))
-          (regexp-opt '(" #" " \n" "#" "\n"))))
+  (rx (or
+       ;; conditional
+       "?"
+       ;; assignment
+       "=" ":=" "+=" "-=" "*=" "/=" "//=" ".//=" ".*=" "./=" "\\=" ".\\="
+       "^=" ".^=" "÷=" ".÷=" "%=" ".%=" "|=" "&=" "$=" "=>" "<<=" ">>="
+       ">>>=" "~" ".+=" ".-="
+       ;; arrow
+       "--" "-->" "←" "→" "↔" "↚" "↛" "↠" "↣" "↦" "↮" "⇎" "⇏" "⇒" "⇔" "⇴"
+       "⇶" "⇷" "⇸" "⇹" "⇺" "⇻" "⇼" "⇽" "⇾" "⇿" "⟵" "⟶" "⟷" "⟷" "⟹"
+       "⟺" "⟻" "⟼" "⟽" "⟾" "⟿" "⤀" "⤁" "⤂" "⤃" "⤄" "⤅" "⤆" "⤇" "⤌"
+       "⤍" "⤎" "⤏" "⤐" "⤑" "⤔" "⤕" "⤖" "⤗" "⤘" "⤝" "⤞" "⤟" "⤠" "⥄" "⥅"
+       "⥆" "⥇" "⥈" "⥊" "⥋" "⥎" "⥐" "⥒" "⥓" "⥖" "⥗" "⥚" "⥛" "⥞" "⥟" "⥢"
+       "⥤" "⥦" "⥧" "⥨" "⥩" "⥪" "⥫" "⥬" "⥭" "⥰" "⧴" "⬱" "⬰" "⬲" "⬳" "⬴"
+       "⬵" "⬶" "⬷" "⬸" "⬹" "⬺" "⬻" "⬼" "⬽" "⬾" "⬿" "⭀" "⭁" "⭂" "⭃" "⭄"
+       "⭇" "⭈" "⭉" "⭊" "⭋" "⭌" "￩" "￫"
+       ;; or and and
+       "&&" "||"
+       ;; comparison
+       ">" "<" ">=" "≥" "<=" "≤" "==" "===" "≡" "!=" "≠" "!==" "≢" ".>"
+       ".<" ".>=" ".≥" ".<=" ".≤" ".==" ".!=" ".≠" ".=" ".!" "<:" ">:" "∈"
+       "∉" "∋" "∌" "⊆" "⊈" "⊂" "⊄" "⊊" "∝" "∊" "∍" "∥" "∦" "∷" "∺" "∻" "∽"
+       "∾" "≁" "≃" "≄" "≅" "≆" "≇" "≈" "≉" "≊" "≋" "≌" "≍" "≎" "≐" "≑" "≒"
+       "≓" "≔" "≕" "≖" "≗" "≘" "≙" "≚" "≛" "≜" "≝" "≞" "≟" "≣" "≦" "≧" "≨"
+       "≩" "≪" "≫" "≬" "≭" "≮" "≯" "≰" "≱" "≲" "≳" "≴" "≵" "≶" "≷" "≸" "≹"
+       "≺" "≻" "≼" "≽" "≾" "≿" "⊀" "⊁" "⊃" "⊅" "⊇" "⊉" "⊋" "⊏" "⊐" "⊑" "⊒"
+       "⊜" "⊩" "⊬" "⊮" "⊰" "⊱" "⊲" "⊳" "⊴" "⊵" "⊶" "⊷" "⋍" "⋐" "⋑" "⋕" "⋖"
+       "⋗" "⋘" "⋙" "⋚" "⋛" "⋜" "⋝" "⋞" "⋟" "⋠" "⋡" "⋢" "⋣" "⋤" "⋥" "⋦" "⋧"
+       "⋨" "⋩" "⋪" "⋫" "⋬" "⋭" "⋲" "⋳" "⋴" "⋵" "⋶" "⋷" "⋸" "⋹" "⋺" "⋻" "⋼"
+       "⋽" "⋾" "⋿" "⟈" "⟉" "⟒" "⦷" "⧀" "⧁" "⧡" "⧣" "⧤" "⧥" "⩦" "⩧" "⩪" "⩫"
+       "⩬" "⩭" "⩮" "⩯" "⩰" "⩱" "⩲" "⩳" "⩴" "⩵" "⩶" "⩷" "⩸" "⩹" "⩺" "⩻" "⩼"
+       "⩽" "⩾" "⩿" "⪀" "⪁" "⪂" "⪃" "⪄" "⪅" "⪆" "⪇" "⪈" "⪉" "⪊" "⪋" "⪌" "⪍"
+       "⪎" "⪏" "⪐" "⪑" "⪒" "⪓" "⪔" "⪕" "⪖" "⪗" "⪘" "⪙" "⪚" "⪛" "⪜" "⪝" "⪞"
+       "⪟" "⪠" "⪡" "⪢" "⪣" "⪤" "⪥" "⪦" "⪧" "⪨" "⪩" "⪪" "⪫" "⪬" "⪭" "⪮" "⪯"
+       "⪰" "⪱" "⪲" "⪳" "⪴" "⪵" "⪶" "⪷" "⪸" "⪹" "⪺" "⪻" "⪼" "⪽" "⪾" "⪿" "⫀"
+       "⫁" "⫂" "⫃" "⫄" "⫅" "⫆" "⫇" "⫈" "⫉" "⫊" "⫋" "⫌" "⫍" "⫎" "⫏" "⫐" "⫑"
+       "⫒" "⫓" "⫔" "⫕" "⫖" "⫗" "⫘" "⫙" "⫷" "⫸" "⫹" "⫺" "⊢" "⊣"
+       ;; pipe, colon
+       "|>" "<|" ":" ".."
+       ;; plus
+       "+" "-" "⊕" "⊖" "⊞" "⊟" ".+" ".-" "++" "|" "∪" "∨" "$" "⊔" "±" "∓"
+       "∔" "∸" "≂" "≏" "⊎" "⊻" "⊽" "⋎" "⋓" "⧺" "⧻" "⨈" "⨢" "⨣" "⨤" "⨥" "⨦"
+       "⨧" "⨨" "⨩" "⨪" "⨫" "⨬" "⨭" "⨮" "⨹" "⨺" "⩁" "⩂" "⩅" "⩊" "⩌" "⩏" "⩐"
+       "⩒" "⩔" "⩖" "⩗" "⩛" "⩝" "⩡" "⩢" "⩣"
+       ;; bitshift
+       "<<" ">>" ">>>" ".<<" ".>>" ".>>>"
+       ;; times
+       "*" "/" "./" "÷" ".÷" "%" "⋅" "∘" "×" ".%" ".*" "\\"
+       ".\\" "&" "∩" "∧" "⊗" "⊘" "⊙" "⊚" "⊛" "⊠" "⊡" "⊓" "∗" "∙" "∤" "⅋"
+       "≀" "⊼" "⋄" "⋆" "⋇" "⋉" "⋊" "⋋" "⋌" "⋏" "⋒" "⟑" "⦸" "⦼" "⦾" "⦿" "⧶"
+       "⧷" "⨇" "⨰" "⨱" "⨲" "⨳" "⨴" "⨵" "⨶" "⨷" "⨸" "⨻" "⨼" "⨽" "⩀" "⩃" "⩄"
+       "⩋" "⩍" "⩎" "⩑" "⩓" "⩕" "⩘" "⩚" "⩜" "⩞" "⩟" "⩠" "⫛" "⊍" "▷" "⨝" "⟕"
+       "⟖" "⟗"
+       ;; rational
+       "//" ".//"
+       ;; power
+       "^" ".^" "↑" "↓" "⇵" "⟰" "⟱" "⤈" "⤉" "⤊" "⤋" "⤒" "⤓" "⥉" "⥌" "⥍"
+       "⥏" "⥑" "⥔" "⥕" "⥘" "⥙" "⥜" "⥝" "⥠" "⥡" "⥣" "⥥" "⥮" "⥯" "￪" "￬"
+       ;; decl, dot
+       "::" ".")
+      (* blank)
+      (or eol ?#)))
 
 (defconst julia-unquote-regex
   "\\(\\s(\\|\\s-\\|-\\|[,%=<>\\+*/?&|!\\^~\\\\;:]\\|^\\)\\($[a-zA-Z0-9_]+\\)")
@@ -255,7 +259,7 @@
 (defconst julia-keyword-regex
   (regexp-opt
    '("if" "else" "elseif" "while" "for" "begin" "end" "quote"
-     "try" "catch" "return" "local" "function" "macro" "ccall"
+     "try" "catch" "return" "local" "function" "macro"
      "finally" "break" "continue" "global" "where"
      "module" "using" "import" "export" "const" "let" "do"
      "baremodule"
@@ -280,9 +284,11 @@
    (cons julia-macro-regex ''julia-macro-face)
    (cons
     (regexp-opt
-     '("true" "false" "C_NULL" "Inf" "NaN" "Inf32" "NaN32" "nothing" "undef" "missing")
+     ;; constants defined in Core plus true/false
+     '("true" "false" "Cvoid" "Inf" "NaN" "Inf32" "NaN32" "nothing" "undef" "missing")
      'symbols)
     'font-lock-constant-face)
+   (cons "ccall" 'font-lock-builtin-face)
    (list julia-unquote-regex 2 'font-lock-constant-face)
    (list julia-forloop-in-regex 1 'font-lock-keyword-face)
    (list julia--forloop-=-regex 1 'font-lock-keyword-face)
@@ -312,25 +318,9 @@
 (defconst julia-block-end-keywords
   (list "end" "else" "elseif" "catch" "finally"))
 
-(defconst julia-syntax-propertize-function
-  (syntax-propertize-rules
-   ;; triple-quoted strings are a single string rather than 3
-   ((rx (group ?\") ?\" (group ?\"))
-    ;; First " starts a string if not already inside a string (or comment)
-    (1 (let ((ppss (save-excursion (syntax-ppss (match-beginning 0)))))
-         (unless (or (nth 3 ppss) (nth 4 ppss))
-           (string-to-syntax "|"))))
-    ;; Last " ends a string if already inside a string
-    (2 (and (nth 3 (save-excursion (syntax-ppss (match-beginning 0))))
-            (string-to-syntax "|"))))
-   ;; backslash acts as an operator if it's not inside a string
-   ("\\\\"
-    (0 (unless (nth 3 (save-excursion (syntax-ppss (match-beginning 0))))
-         (string-to-syntax "."))))
-   (julia-char-regex
-    (1 "\"")                    ; Treat ' as a string delimiter.
-    (2 ".")                     ; Don't highlight anything between.
-    (3 "\"")))) ; Treat the last " in """ as a string delimiter.
+(defsubst julia-syntax-comment-or-string-p (&optional syntax-ppss)
+  "Return non-nil if SYNTAX-PPSS is inside string or comment."
+  (nth 8 (or syntax-ppss (syntax-ppss))))
 
 (defun julia-in-comment (&optional syntax-ppss)
   "Return non-nil if point is inside a comment using SYNTAX-PPSS.
@@ -343,6 +333,49 @@ Note this is Emacs' notion of what is highlighted as a string.
 As a result, it is true inside \"foo\", `foo` and 'f'."
   (nth 3 (or syntax-ppss (syntax-ppss))))
 
+(defconst julia-syntax-propertize-function
+  (syntax-propertize-rules
+   ;; triple-quoted strings are a single string rather than 3
+   ("\"\"\""
+    (0 (ignore (julia-syntax-stringify))))
+   ;; same with triple-quoted backticks
+   ("```"
+    (0 (ignore (julia-syntax-stringify))))
+   ;; backslash acts as an operator if it's not inside a string
+   ("\\\\"
+    (0 (unless (julia-in-string
+                (save-excursion (syntax-ppss (match-beginning 0))))
+         (string-to-syntax "."))))
+   (julia-char-regex
+    ;; treat ' in 'c' as string-delimiter
+    (1 "\"")
+    (2 "\""))))
+
+(defun julia-syntax-stringify ()
+  "Put `syntax-table' property correctly on triple-quoted strings and cmds."
+  (let* ((ppss (save-excursion (syntax-ppss (match-beginning 0))))
+         (string-open (and (not (nth 4 ppss)) (nth 8 ppss))))
+    (cond
+     ;; this set of quotes delimit the start of string/cmd
+     ((not string-open)
+      (put-text-property (match-beginning 0) (1+ (match-beginning 0))
+                         'syntax-table (string-to-syntax "|")))
+     ;; this set of quotes closes the current string/cmd
+     ((and
+       ;; check that """ closes """ and ``` closes ```
+       (eq (char-before) (char-after string-open))
+       ;; check that triple quote isn't escaped by odd number of backslashes
+       (let ((i 0))
+         (while (and (< (point-min) (- (match-beginning 0) i))
+                     (eq (char-before (- (match-beginning 0) i)) ?\\))
+           (setq i (1+ i)))
+         (cl-evenp i)))
+      (put-text-property (1- (match-end 0)) (match-end 0)
+                         'syntax-table (string-to-syntax "|")))
+     ;; Put point after (match-beginning 0) to account for possibility
+     ;; of overlapping triple-quotes with first escaped
+     ((backward-char 2)))))
+
 (defun julia-in-brackets ()
   "Return non-nil if point is inside square brackets."
   (let ((start-pos (point))
@@ -353,7 +386,7 @@ As a result, it is true inside \"foo\", `foo` and 'f'."
 
       (while (< (point) start-pos)
         ;; Don't count [ or ] inside strings, characters or comments.
-        (unless (or (julia-in-string) (julia-in-comment))
+        (unless (julia-syntax-comment-or-string-p)
 
           (when (looking-at (rx "["))
             (cl-incf open-count))
@@ -369,7 +402,7 @@ As a result, it is true inside \"foo\", `foo` and 'f'."
   "Return the word at point if it matches any keyword in KW-LIST.
 KW-LIST is a list of strings.  The word at point is not considered
 a keyword if used as a field name, X.word, or quoted, :word."
-  (and (or (= (point) 1)
+  (and (or (bobp)
 	   (and (not (equal (char-before (point)) ?.))
 		(not (equal (char-before (point)) ?:))))
        (not (looking-at "("))           ; handle "function(" when on (
@@ -399,7 +432,7 @@ symbol, gives up when this is not true."
       (while (and (not done) (< (point-min) (point)))
         (julia-safe-backward-sexp)
         (cond
-         ((looking-at (rx (or "import" "export" "using")))
+         ((looking-at (regexp-opt (list "import" "export" "using")))
           (setf done (point)))
          ((looking-at (rx (group (* (or word (syntax symbol)))) (0+ space) ":"))
           (if module
@@ -407,6 +440,8 @@ symbol, gives up when this is not true."
             (setf module (match-string-no-properties 1))))
          ((looking-at (rx (* (or word (syntax symbol))) (0+ space) ","))
           (when module (setf done 'broken)))
+         ((looking-at (rx (* (or word (syntax symbol))) "."))
+          (setf module (concat (match-string-no-properties 0) module)))
          (t (setf done 'broken)))))
     (if (eq done 'broken)
         nil
@@ -438,13 +473,19 @@ Do not move back beyond MIN."
     (and pos
 	 (progn
 	   (goto-char pos)
-	   (+ julia-indent-offset (current-indentation))))))
+	   (+ julia-indent-offset (julia-block-open-indentation))))))
 
-(defsubst julia--safe-backward-char ()
-  "Move back one character, but don't error if we're at the
-beginning of the buffer."
-  (unless (eq (point) (point-min))
-    (backward-char)))
+(defun julia-block-open-indentation ()
+  "Get the current indentation or the start of a parenthetical block."
+  (save-excursion
+    (save-restriction
+      ;; narrow to one line to only search syntax on that line
+      (narrow-to-region (line-beginning-position) (line-end-position))
+        (condition-case nil
+            (progn
+              (backward-up-list)
+              (1+ (current-column)))
+          (error (current-indentation))))))
 
 (defcustom julia-max-block-lookback 20000
   "When indenting, don't look back more than this many characters
@@ -453,8 +494,7 @@ to see if there are unclosed blocks.
 This variable has a small effect on indent performance if set
 too high, but stops indenting in the middle of long blocks if set
 too low."
-  :type 'integer
-  :group 'julia)
+  :type 'integer)
 
 (defun julia-paren-indent ()
   "Return the column of the text following the innermost
@@ -516,6 +556,12 @@ the (possibly narrowed) buffer, so there is nowhere else to go."
          (t
           (throw 'result 0)))))))
 
+(defun julia--hanging-operator-p ()
+  "Return t if current line ends with a hanging operator."
+  (and (re-search-forward julia-hanging-operator-regexp (line-end-position) t)
+       (not (julia-syntax-comment-or-string-p
+             (save-excursion (syntax-ppss (match-beginning 0)))))))
+
 (defun julia-indent-hanging ()
   "Calculate indentation for lines that follow \"hanging\"
 operators (operators that end the previous line) as defined in
@@ -528,9 +574,9 @@ only comments."
     (save-excursion
       (when (> (julia-prev-line-skip-blank-or-comment) 0)
         (setq prev-indent (current-indentation))
-        (when (looking-at-p julia-hanging-operator-regexp)
+        (when (julia--hanging-operator-p)
           (if (and (> (julia-prev-line-skip-blank-or-comment) 0)
-                   (looking-at-p julia-hanging-operator-regexp))
+                   (julia--hanging-operator-p))
               ;; two preceding hanging operators => indent same as line
               ;; above
               prev-indent
@@ -565,27 +611,27 @@ meaning always increase indent on TAB and decrease on S-TAB."
       ;; note: if this first function returns nil the beginning of the line
       ;; cannot be in a string
       (julia-indent-in-string)
-      ;; If we're inside an open paren, indent to line up arguments. After this,
-      ;; we cannot be inside parens which includes brackets
-      (julia-paren-indent)
       ;; indent due to hanging operators (lines ending in an operator)
       (julia-indent-hanging)
       ;; indent for import and export
       (julia-indent-import-export-using)
-      ;; Indent according to how many nested blocks we are in.
-      (save-excursion
-        (beginning-of-line)
-        ;; jump out of any comments
-        (let ((state (syntax-ppss)))
-          (when (nth 4 state)
-            (goto-char (nth 8 state))))
-        (forward-to-indentation 0)
-        (let ((endtok (julia-at-keyword julia-block-end-keywords))
-              (last-open-block (julia-last-open-block (- (point) julia-max-block-lookback))))
-          (max 0 (+ (or last-open-block 0)
-                    (if (or endtok
-                            (julia-at-keyword julia-block-start-keywords-no-indent))
-                        (- julia-indent-offset) 0)))))))
+      ;; use julia-paren-indent along with block indentation
+      (let ((paren-indent (or (julia-paren-indent) 0)))
+        ;; Indent according to how many nested blocks we are in.
+        (save-excursion
+          (beginning-of-line)
+          ;; jump out of any comments
+          (let ((state (syntax-ppss)))
+            (when (nth 4 state)
+              (goto-char (nth 8 state))))
+          (forward-to-indentation 0)
+          (let ((endtok (julia-at-keyword julia-block-end-keywords))
+                (last-open-block (julia-last-open-block (- (point) julia-max-block-lookback))))
+            (max paren-indent (- (or last-open-block paren-indent)
+                                 ;; subtract indentation if we're at the end of a block
+                                 (if (or endtok
+                                         (julia-at-keyword julia-block-start-keywords-no-indent))
+                                     julia-indent-offset 0))))))))
     ;; Point is now at the beginning of indentation, restore it
     ;; to its original position (relative to indentation).
     (when (>= point-offset 0)
@@ -607,10 +653,6 @@ TYPE can be `comment', `string' or `paren'."
     (cond
      ((nth 8 ppss) (if (nth 4 ppss) 'comment 'string))
      ((nth 1 ppss) 'paren))))
-
-(defsubst julia-syntax-comment-or-string-p (&optional syntax-ppss)
-  "Return non-nil if SYNTAX-PPSS is inside string or comment."
-  (nth 8 (or syntax-ppss (syntax-ppss))))
 
 (defun julia-looking-at-beginning-of-defun (&optional syntax-ppss)
   "Check if point is at `beginning-of-defun' using SYNTAX-PPSS."
@@ -724,6 +766,7 @@ Return nil if point is not in a function, otherwise point."
 ;;;###autoload
 (define-derived-mode julia-mode prog-mode "Julia"
   "Major mode for editing julia code."
+  :group 'julia
   (set-syntax-table julia-mode-syntax-table)
   (setq-local comment-start "# ")
   (setq-local comment-start-skip "#+\\s-*")
@@ -774,7 +817,7 @@ strings."
 ;; (add-hook 'julia-mode-hook 'julia-math-mode)
 ;; (add-hook 'inferior-julia-mode-hook 'julia-math-mode)
 
-(when (require 'latex nil t)
+(when (featurep 'latex)
   (declare-function LaTeX-math-abbrev-prefix "latex")
 
   (defun julia-math-insert (s)
@@ -828,6 +871,10 @@ following commands are defined:
                julia-program nil julia-arguments))
       (pop-to-buffer-same-window "*Julia*")
       (inferior-julia-mode)))
+
+(make-obsolete 'inferior-julia
+               "REPL modes are now provided by various third-party packages, this will be removed."
+               "2021-08-30")
 
 (defun inferior-julia--initialize ()
     "Helper function to initialize `inferior-julia'."
