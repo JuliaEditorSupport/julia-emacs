@@ -719,17 +719,7 @@ Return nil if point is not in a function, otherwise point."
     ("Const" ,julia-const-def-regex 1)
     ("Struct" ,julia-type-regex 1)
     ("Require" " *\\(\\brequire\\)(\\([^ \t\n)]*\\)" 2)
-    ("Include" " *\\(\\binclude\\)(\\([^ \t\n)]*\\)" 2)
-    ;; ("Classes" "^.*setClass(\\(.*\\)," 1)
-    ;; ("Coercions" "^.*setAs(\\([^,]+,[^,]*\\)," 1) ; show from and to
-    ;; ("Generics" "^.*setGeneric(\\([^,]*\\)," 1)
-    ;; ("Methods" "^.*set\\(Group\\|Replace\\)?Method(\"\\(.+\\)\"," 2)
-    ;; ;;[ ]*\\(signature=\\)?(\\(.*,?\\)*\\)," 1)
-    ;; ;;
-    ;; ;;("Other" "^\\(.+\\)\\s-*<-[ \t\n]*[^\\(function\\|read\\|.*data\.frame\\)]" 1)
-    ;; ("Package" "^.*\\(library\\|require\\)(\\(.*\\)," 2)
-    ;; ("Data" "^\\(.+\\)\\s-*<-[ \t\n]*\\(read\\|.*data\.frame\\).*(" 1)))
-    ))
+    ("Include" " *\\(\\binclude\\)(\\([^ \t\n)]*\\)" 2)))
 
 ;;;###autoload
 (define-derived-mode julia-mode prog-mode "Julia"
