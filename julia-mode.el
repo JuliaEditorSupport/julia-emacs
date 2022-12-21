@@ -236,6 +236,13 @@
                        "abstract type" "primitive type" "struct" "mutable struct")
       (1+ space) (group (1+ (or word (syntax symbol))))))
 
+(defconst julia-const-def-regex
+  (rx
+   bol (zero-or-more space)
+   "const" space
+   (group (one-or-more alnum)) (zero-or-more space)
+   "=" (not (any "="))))
+
 (defconst julia-type-annotation-regex
   (rx "::" (0+ space) (group (1+ (or word (syntax symbol))))))
 
@@ -283,6 +290,10 @@
    (list julia-function-regex 1 'font-lock-function-name-face)
    (list julia-function-assignment-regex 1 'font-lock-function-name-face)
    (list julia-type-regex 1 'font-lock-type-face)
+   ;; Per the elisp manual, font-lock-variable-name-face is for variables being defined or
+   ;; declared. It is difficult identify this consistently in julia (see issue #2). For now,
+   ;; we only font-lock constant definitions.
+   (list julia-const-def-regex 1 'font-lock-variable-name-face)
    ;; font-lock-type-face is for the point of type definition rather
    ;; than usage, but using for type annotations is an acceptable pun.
    (list julia-type-annotation-regex 1 'font-lock-type-face)
@@ -700,19 +711,12 @@ Return nil if point is not in a function, otherwise point."
       (end-of-line)
       (point))))
 
-(defconst julia-imenu-const
-  (rx
-   bol (zero-or-more space)
-   "const" space
-   (group (one-or-more alnum)) (zero-or-more space)
-   "=" space))
-
 ;;; IMENU
 (defvar julia-imenu-generic-expression
   ;; don't use syntax classes, screws egrep
   `(("Function" ,julia-function-regex 1)
     ("Function" ,julia-function-assignment-regex 1)
-    ("Const" ,julia-imenu-const 1)
+    ("Const" ,julia-const-def-regex 1)
     ("Struct" ,julia-type-regex 1)
     ("Require" " *\\(\\brequire\\)(\\([^ \t\n)]*\\)" 2)
     ("Include" " *\\(\\binclude\\)(\\([^ \t\n)]*\\)" 2)

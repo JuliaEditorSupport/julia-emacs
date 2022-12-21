@@ -532,6 +532,15 @@ end")
     (julia--should-font-lock string 74 font-lock-type-face) ; B
     ))
 
+(ert-deftest julia--test-const-def-font-lock ()
+  (let ((string "const foo = \"bar\""))
+    (julia--should-font-lock string 1 font-lock-keyword-face) ; const
+    (julia--should-font-lock string 5 font-lock-keyword-face) ; const
+    (julia--should-font-lock string 7 font-lock-variable-name-face) ; foo
+    (julia--should-font-lock string 9 font-lock-variable-name-face) ; foo
+    (julia--should-font-lock string 11 nil) ; =
+    ))
+
 ;;; Movement
 (ert-deftest julia--test-beginning-of-defun-assn-1 ()
   "Point moves to beginning of single-line assignment function."
