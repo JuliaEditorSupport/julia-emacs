@@ -319,7 +319,7 @@ Handles both single-line and multi-line comments."
 (defun julia-in-string (&optional syntax-ppss)
   "Return non-nil if point is inside a string using SYNTAX-PPSS.
 Note this is Emacs' notion of what is highlighted as a string.
-As a result, it is true inside \"foo\", `foo` and 'f'."
+As a result, it is true inside \"foo\", \\=`foo\\=` and \\='f\\='."
   (nth 3 (or syntax-ppss (syntax-ppss))))
 
 (defconst julia-syntax-propertize-function
