@@ -833,28 +833,36 @@ If there is not a LaTeX-like symbol at point, return nil."
       (forward-char))
     (point)))
 
-;; Sometimes you want to complete a symbol point is in middle of
+;; Sometimes you want to complete a symbol `point' is in middle of
 (defun julia-mode-latexsub-completion-at-point-around ()
   "Return completion for LaTeX-like symbol around point.
 Suitable for use in `completion-at-point-functions'."
-  (let ((beg (julia--latexsub-start-symbol)))
-    (when beg
-      (list beg (julia--latexsub-end-symbol) julia-mode-latexsubs
-            :exclusive 'no
-            :annotation-function (lambda (s)
-                                   (concat " " (gethash s julia-mode-latexsubs)))
-            :exit-function (julia--latexsub-exit-function beg)))))
+  (when-let ((beg (julia--latexsub-start-symbol)))
+    (let* ((end (julia--latexsub-end-symbol))
+           (buffer-symbol (buffer-substring beg end))
+           ;; Depending on `completion-styles', completion may try to complete
+           ;; e.g. "\hat_mean" to "\hat". This predicate ensures that any completion candidates
+           ;; must start with "\hat_mean".
+           (pred (lambda (candidate _candidate-completion)
+                   (string= buffer-symbol
+                            (substring candidate
+                                       0 (min (length candidate) (length buffer-symbol)))))))
+      (julia--latexsub-capf-list beg end pred))))
 
 ;; Sometimes you want to complete a symbol point is at end of (with no space after)
 (defun julia-mode-latexsub-completion-at-point-before ()
   "Return completion for LaTeX-like symbol before point.
 Suitable for use in `completion-at-point-functions'."
-  (let ((beg (julia--latexsub-start-symbol)))
-    (when beg
-      (list beg (point) julia-mode-latexsubs :exclusive 'no
-            :annotation-function (lambda (s)
-                                   (concat " " (gethash s julia-mode-latexsubs)))
-            :exit-function (julia--latexsub-exit-function beg)))))
+  (when-let ((beg (julia--latexsub-start-symbol)))
+    (julia--latexsub-capf-list beg (point) nil)))
+
+(defun julia--latexsub-capf-list (beg end pred)
+  "Return list suitable for use in `completion-at-point-functions' of latexsubs."
+  (list beg end julia-mode-latexsubs :exclusive 'no
+        :annotation-function (lambda (s)
+                               (concat " " (gethash s julia-mode-latexsubs)))
+        :exit-function (julia--latexsub-exit-function beg)
+        :predicate pred))
 
 (defun julia--latexsub-exit-function (beg)
   "Return function to be used as `completion-extra-properties' `:exit-function'.
@@ -870,8 +878,9 @@ buffer where the LaTeX symbol starts."
         ;; <https://github.com/abo-abo/swiper/issues/2345>). Instead of automatic
         ;; expansion, user can either enable `abbrev-mode' or call `expand-abbrev'.
         (when-let (((eq status 'finished))
-                   (symb (abbrev-symbol name julia-latexsub-abbrev-table)))
-          (abbrev-insert symb name beg (point))))
+                   (symb (abbrev-symbol name julia-latexsub-abbrev-table))
+                   (end (+ beg (length name))))
+          (abbrev-insert symb name beg end)))
     #'ignore))
 
 ;; company-mode doesn't work via `indent-for-tab-command'. In order to have a consistent
