@@ -884,23 +884,23 @@ end" 'end-of-defun "n == 0" "return fact(x)[ \n]+end" 'end 2))
 ;;;
 
 (defun julia--find-latex (contents position)
-  "Find bounds of LaTeX symbol in CONTENTS with point at POSITION."
+  "Find bounds of LaTeX symbol in CONTENTS with point at POSITION, `'((start . end) string)'."
   (with-temp-buffer
     (julia-mode)
     (insert contents)
     (goto-char position)
-    (cons (julia--latexsub-start-symbol) (julia--latexsub-end-symbol))))
+    (let* ((beg (julia--latexsub-start-symbol))
+           (end (julia-mode--latexsubs-longest-partial-end beg)))
+      (list (cons beg end) (buffer-substring beg end)))))
 
 (ert-deftest julia--test-find-latex ()
-  (should (equal (julia--find-latex "\\alpha " 7) (cons 1 7)))
-  (should (equal (julia--find-latex "\\alpha " 3) (cons 1 7)))
-  (should (equal (julia--find-latex "x\\alpha " 8) (cons 2 8)))
-  (should (equal (julia--find-latex "x\\alpha " 3) (cons 2 8)))
-  ;; There is no valid substitution for \alpha(, but there could
-  ;; be. julia-mode-latexsub-completion-at-point-before will still
-  ;; give correct completion in this situation.
-  (should (equal (julia--find-latex "\\kappa\\alpha(" 13) (cons 7 14)))
-  (should (equal (julia--find-latex "\\kappa\\alpha(" 4) (cons 1 7))))
+  (should (equal (julia--find-latex "\\alpha " 7) '((1 . 7) "\\alpha")))
+  (should (equal (julia--find-latex "\\alpha " 3) '((1 . 7) "\\alpha")))
+  (should (equal (julia--find-latex "x\\alpha " 8) '((2 . 8) "\\alpha")))
+  (should (equal (julia--find-latex "x\\alpha " 3) '((2 . 8) "\\alpha")))
+  (should (equal (julia--find-latex "\\kappa\\alpha(" 13) '((7 . 13) "\\alpha")))
+  (should (equal (julia--find-latex "\\kappa\\alpha(" 4) '((1 . 7) "\\kappa")))
+  (should (equal (julia--find-latex "α\\hat_mean" 3) '((2 . 6) "\\hat"))))
 
 ;;;
 ;;; abbrev tests
