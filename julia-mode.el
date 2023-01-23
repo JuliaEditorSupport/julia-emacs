@@ -67,6 +67,35 @@ User can still use `abbrev-mode' or `expand-abbrev' to substitute
 unicode for LaTeX even if disabled."
   :type 'boolean)
 
+(defconst julia-mode--latexsubs-partials
+  (let ((table (make-hash-table :test 'equal)))
+    (maphash (lambda (latex subst)
+               (cl-assert (string= (substring latex 0 1) "\\") nil
+                          "LaTeX substitution does not start with \\.")
+               (let ((len (length latex)))
+                 (cl-assert (< 1 len) nil "Trivially short LaTeX subtitution")
+                 (cl-loop for i from 2 to len
+                          do (puthash (substring latex 1 i) t table))))
+             julia-mode-latexsubs)
+    table)
+  "A hash table containing all partial strings from the LaTeX abbreviations in `julia-mode-latexsubs' as keys. Values are always `t', the purpose is to represent a set.")
+
+(defun julia-mode--latexsubs-longest-partial-end (beg)
+  "Starting at `beg' (should be the  \"\\\"), return the end of the longest partial match for LaTeX completion, or `nil' when not applicable."
+  (save-excursion
+    (goto-char beg)
+    (when (and (= (char-after) ?\\) (not (eobp)))
+      (forward-char)
+      (let ((beg (point)))
+        (defun next-char-matches? ()
+          (let* ((end (1+ (point)))
+                 (str (buffer-substring-no-properties beg end))
+                 (valid? (gethash str julia-mode--latexsubs-partials)))
+            valid?))
+        (while (and (not (eobp)) (next-char-matches?))
+          (forward-char))
+        (point)))))
+
 (defface julia-macro-face
   '((t :inherit font-lock-preprocessor-face))
   "Face for Julia macro invocations.")
@@ -825,20 +854,12 @@ If there is not a LaTeX-like symbol at point, return nil."
     (when (= ?\\ (char-before))
       (- (point) 1))))
 
-(defun julia--latexsub-end-symbol ()
-  "Determine the end location for LaTeX-like symbol at point."
-  (save-excursion
-    (while (not (or (eobp)
-                    (member (char-syntax (char-after)) '(?\s ?< ?> ?\\))))
-      (forward-char))
-    (point)))
-
 ;; Sometimes you want to complete a symbol `point' is in middle of
 (defun julia-mode-latexsub-completion-at-point-around ()
   "Return completion for LaTeX-like symbol around point.
 Suitable for use in `completion-at-point-functions'."
   (when-let ((beg (julia--latexsub-start-symbol)))
-    (let* ((end (julia--latexsub-end-symbol))
+    (let* ((end (julia-mode--latexsubs-longest-partial-end beg))
            (buffer-symbol (buffer-substring beg end))
            ;; Depending on `completion-styles', completion may try to complete
            ;; e.g. "\hat_mean" to "\hat". This predicate ensures that any completion candidates
