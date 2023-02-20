@@ -84,7 +84,8 @@ unicode for LaTeX even if disabled."
 represent a set.")
 
 (defun julia-mode--latexsubs-longest-partial-end (beg)
-  "Starting at `beg' (should be the  \"\\\"), return the end of the longest partial match for LaTeX completion, or `nil' when not applicable."
+  "Starting at `beg' (should be the  \"\\\"), return the end of the longest
+partial match for LaTeX completion, or `nil' when not applicable."
   (save-excursion
     (goto-char beg)
     (when (and (= (char-after) ?\\) (not (eobp)))
@@ -365,8 +366,8 @@ Handles both single-line and multi-line comments."
 
 (defun julia-in-string (&optional syntax-ppss)
   "Return non-nil if point is inside a string using SYNTAX-PPSS.
-Note this is Emacs' notion of what is highlighted as a string.
-As a result, it is true inside \"foo\", `foo` and 'f'."
+Note this is Emacs\\=' notion of what is highlighted as a string.
+As a result, it is true inside \"foo\", `foo` and `f`."
   (nth 3 (or syntax-ppss (syntax-ppss))))
 
 (defconst julia-syntax-propertize-function
