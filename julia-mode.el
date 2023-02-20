@@ -69,16 +69,19 @@ unicode for LaTeX even if disabled."
 
 (defconst julia-mode--latexsubs-partials
   (let ((table (make-hash-table :test 'equal)))
-    (maphash (lambda (latex subst)
+    (maphash (lambda (latex _subst)
                (cl-assert (string= (substring latex 0 1) "\\") nil
                           "LaTeX substitution does not start with \\.")
                (let ((len (length latex)))
                  (cl-assert (< 1 len) nil "Trivially short LaTeX subtitution")
+                 ;; for \foo, put f, fo, foo into the table
                  (cl-loop for i from 2 to len
                           do (puthash (substring latex 1 i) t table))))
              julia-mode-latexsubs)
     table)
-  "A hash table containing all partial strings from the LaTeX abbreviations in `julia-mode-latexsubs' as keys. Values are always `t', the purpose is to represent a set.")
+  "A hash table containing all partial strings from the LaTeX abbreviations in
+`julia-mode-latexsubs' as keys. Values are always `t', the purpose is to
+represent a set.")
 
 (defun julia-mode--latexsubs-longest-partial-end (beg)
   "Starting at `beg' (should be the  \"\\\"), return the end of the longest partial match for LaTeX completion, or `nil' when not applicable."
