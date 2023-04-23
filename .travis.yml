@@ -23,7 +23,7 @@ install:
 
 script:
   - $EMACS --version
-  - $EMACS --batch -L . --eval "(and (>= emacs-major-version 24) (setq byte-compile-error-on-warn t))" -f batch-byte-compile julia-mode.el
+  - $EMACS --batch -L . --eval "(progn (and (>= emacs-major-version 24) (setq byte-compile-error-on-warn t)) (package-initialize) (package-install-file \"julia-mode.el\"))" -f batch-byte-compile julia-mode.el
   - $EMACS -batch -L . -l ert -l julia-mode-tests.el -f ert-run-tests-batch-and-exit;
 
 notifications:
