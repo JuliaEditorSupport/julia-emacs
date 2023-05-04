@@ -4,7 +4,7 @@
 ;; URL: https://github.com/JuliaEditorSupport/julia-emacs
 ;; Version: 0.4
 ;; Keywords: languages
-;; Package-Requires: ((emacs "24.3"))
+;; Package-Requires: ((emacs "26.1"))
 
 ;;; Usage:
 ;; Put the following code in your .emacs, site-load.el, or other relevant file
