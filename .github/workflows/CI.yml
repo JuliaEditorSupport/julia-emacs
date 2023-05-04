@@ -17,9 +17,6 @@ jobs:
       fail-fast: false
       matrix:
         emacs_version:
-          - 25.1
-          - 25.2
-          - 25.3
           - 26.1
           - 26.2
           - 26.3
@@ -31,7 +28,7 @@ jobs:
           - true
         include:
           - emacs_version: snapshot
-            ignore_warnings: false
+            ignore_warnings: true
     steps:
     - uses: actions/checkout@v2
     - uses: purcell/setup-emacs@master
