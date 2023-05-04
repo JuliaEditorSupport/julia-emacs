@@ -880,26 +880,69 @@ return fact(x)
 end" 'end-of-defun "n == 0" "return fact(x)[ \n]+end" 'end 2))
 
 ;;;
-;;; substitution tests
+;;; latex completion tests
 ;;;
 
-(defun julia--substitute (contents position)
-  "Call LaTeX subsitution in a buffer with `contents' at point
-`position', and return the resulting buffer."
+(defun julia--find-latex (contents position)
+  "Find bounds of LaTeX symbol in CONTENTS with point at POSITION, `'((start . end) string)'."
   (with-temp-buffer
     (julia-mode)
     (insert contents)
     (goto-char position)
-    (julia-latexsub)
+    (let* ((beg (julia--latexsub-start-symbol))
+           (end (julia-mode--latexsubs-longest-partial-end beg)))
+      (list (cons beg end) (buffer-substring beg end)))))
+
+(ert-deftest julia--test-find-latex ()
+  (should (equal (julia--find-latex "\\alpha " 7) '((1 . 7) "\\alpha")))
+  (should (equal (julia--find-latex "\\alpha " 3) '((1 . 7) "\\alpha")))
+  (should (equal (julia--find-latex "x\\alpha " 8) '((2 . 8) "\\alpha")))
+  (should (equal (julia--find-latex "x\\alpha " 3) '((2 . 8) "\\alpha")))
+  (should (equal (julia--find-latex "\\kappa\\alpha(" 13) '((7 . 13) "\\alpha")))
+  (should (equal (julia--find-latex "\\kappa\\alpha(" 4) '((1 . 7) "\\kappa")))
+  (should (equal (julia--find-latex "α\\hat_mean" 3) '((2 . 6) "\\hat"))))
+
+;;;
+;;; abbrev tests
+;;;
+
+(defun julia--abbrev (contents position)
+  "Call `expand-abbrev' in buffer with CONTENTS at POSITION."
+  (with-temp-buffer
+    (julia-mode)
+    (insert contents)
+    (goto-char position)
+    (expand-abbrev)
     (buffer-string)))
 
-(ert-deftest julia--test-substitutions ()
-  (should (equal (julia--substitute "\\alpha " 7) "α "))
-  (should (equal (julia--substitute "x\\alpha " 8) "xα "))
-  (should (equal (julia--substitute "\\kappa\\alpha(" 13) "\\kappaα("))
-  (should (equal (julia--substitute "\\alpha" 7) "α"))
-  ; (should (equal (julia--substitute "\\alpha" 6) "α")) ; BROKEN
+(ert-deftest julia--test-latex-abbrev ()
+  (should (equal (julia--abbrev "\\alpha " 7) "α "))
+  (should (equal (julia--abbrev "x\\alpha " 8)  "xα "))
+  (should (equal (julia--abbrev "\\kappa\\alpha(" 13)  "\\kappaα("))
+  ; (should (equal (julia--abbrev "\\alpha(" 6)  "α")) ; BROKEN
   )
+
+(defun julia--call-latexsub-exit-function (contents beg position name auto-abbrev)
+  "Return buffer produced by `julia--latexsub-exit-function'."
+  (with-temp-buffer
+    (insert contents)
+    (goto-char position)
+    (setq-local julia-automatic-latexsub auto-abbrev)
+    (funcall (julia--latexsub-exit-function beg) name 'finished)
+    (buffer-string)))
+
+(ert-deftest julia--test-latexsub-exit-function ()
+  (should (equal (julia--call-latexsub-exit-function "\\alpha" 1 7 "\\alpha" t) "α"))
+  (should (equal (julia--call-latexsub-exit-function "x\\alpha " 2 8 "\\alpha" t)  "xα "))
+  (should (equal (julia--call-latexsub-exit-function
+                  "\\kappa\\alpha(" 7 13 "\\alpha" t)
+                 "\\kappaα("))
+  ;; test that LaTeX not expanded when `julia-automatic-latexsub' is nil
+  (should (equal (julia--call-latexsub-exit-function "\\alpha" 1 7 "\\alpha" nil) "\\alpha"))
+  (should (equal (julia--call-latexsub-exit-function "x\\alpha " 2 8 "\\alpha" nil)  "x\\alpha "))
+  (should (equal (julia--call-latexsub-exit-function
+                  "\\kappa\\alpha(" 7 13 "\\alpha" nil)
+                 "\\kappa\\alpha(")))
 
 ;;; syntax-propertize-function tests
 
