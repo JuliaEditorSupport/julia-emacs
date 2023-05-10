@@ -908,24 +908,6 @@ buffer where the LaTeX symbol starts."
           (abbrev-insert symb name beg end)))
     #'ignore))
 
-;; company-mode doesn't work via `indent-for-tab-command'. In order to have a consistent
-;; completion UI, we must dynamically choose between `company-indent-or-complete-common' and
-;; `indent-for-tab-command' based on whether `company-mode' is active. First we need to
-;; pacify the byte-compiler though.
-(declare-function company-indent-or-complete-common "company")
-(defvar company-mode)
-
-(defun julia--company-indent-for-tab-command (arg)
-  "Call `indent-for-tab-command' or `company-indent-or-complete-common'."
-  (interactive "P")
-  (if company-mode
-      (company-indent-or-complete-common arg)
-    (indent-for-tab-command arg)))
-
-(with-eval-after-load 'company
-  (define-key julia-mode-map [remap indent-for-tab-command]
-    #'julia--company-indent-for-tab-command))
-
 ;; Math insertion in julia. Use it with
 ;; (add-hook 'julia-mode-hook 'julia-math-mode)
 ;; (add-hook 'inferior-julia-mode-hook 'julia-math-mode)
