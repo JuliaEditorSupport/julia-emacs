@@ -101,6 +101,7 @@ partial match for LaTeX completion, or `nil' when not applicable."
     (goto-char beg)
     (when (and (= (char-after) ?\\) (not (eobp)))
       (let ((beg (point)))
+        (forward-char)                  ; move past the \
         (cl-flet ((next-char-matches? ()
                                       (let* ((end (1+ (point)))
                                              (str (buffer-substring-no-properties beg end))
