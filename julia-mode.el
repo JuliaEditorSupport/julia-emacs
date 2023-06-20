@@ -67,29 +67,32 @@ User can still use `abbrev-mode' or `expand-abbrev' to substitute
 unicode for LaTeX even if disabled."
   :type 'boolean)
 
+(defcustom julia-latexsub-greedy t
+  "When `t', `julia-latexsub-or-indent' does not offer options when a complete match is found. Eg for \"\\bar\", \"\\barcap\" etc will not be offered in a prompt."
+  :type 'boolean)
+
 (defconst julia-mode--latexsubs-partials
   (let ((table-unordered (make-hash-table :test 'equal))
         (table-ordered (make-hash-table :test 'equal)))
     (cl-flet ((_append (key replacement)
                        (puthash key (cons replacement (gethash key table-unordered nil)) table-unordered)))
       ;; accumulate partials
-      (maphash (lambda (latex replacement)
+      (maphash (lambda (latex _unicode)
                  (cl-assert (string= (substring latex 0 1) "\\") nil
                             "LaTeX substitution does not start with \\.")
                  (let ((len (length latex)))
                    (cl-assert (< 1 len) nil "Trivially short LaTeX subtitution")
-                   ;; for \foo, put f, fo, foo into the table
+                   ;; for \foo, put \f, \fo, \foo into the table
                    (cl-loop for i from 2 to len
-                            do (_append (substring latex 1 i) (cons latex replacement)))))
+                            do (_append (substring latex 0 i) latex))))
                julia-mode-latexsubs)
       ;; order by LaTeX part
       (maphash (lambda (partial replacements)
-                 (puthash partial (sort replacements (lambda (a b) (string< (car a) (car b)))) table-ordered))
+                 (puthash partial (sort replacements #'string<) table-ordered))
                table-unordered))
     table-ordered)
   "A hash table containing all partial strings from the LaTeX abbreviations in
-`julia-mode-latexsubs' as keys. Values are lists of the `(cons latex replacement)`,
-ordered by the `latex` part.")
+`julia-mode-latexsubs' as keys. Values are sorted lists of complete \"\\some_string\".")
 
 (defun julia-mode--latexsubs-longest-partial-end (beg)
   "Starting at `beg' (should be the  \"\\\"), return the end of the longest
@@ -917,19 +920,26 @@ buffer where the LaTeX symbol starts."
     #'ignore))
 
 (defun julia-mode--latexsub-before-point ()
-  "When there is a LaTeX substitution that can be made before the point, return (CONS BEG SUBSITUTION).
+  "When there is a LaTeX substitution that can be made before the point, return (CONS BEG LATEX).
 
-`beg' is the position of the `\`, `substitution' is the replacement. When multiple options match, ask the user to clarify via `completing-read'"
+`beg' is the position of the `\`, `latex' is the string to replace, including the `\`.
+
+When multiple options match, ask the user to clarify via `completing-read', unless there is a complete match and `julia-latexsub-greedy' is `t'."
   (when-let (beg (julia--latexsub-start-symbol))
-    (let ((partial (buffer-substring-no-properties (1+ beg) (point))))
+    (let ((partial (buffer-substring-no-properties beg (point))))
+      (message "partial %s" partial)
       (when-let (replacements (gethash partial julia-mode--latexsubs-partials))
-        (cons beg
-              (if (cdr replacements)
-                  (gethash (completing-read "LaTeX completions: " (mapcar #'car replacements)) julia-mode-latexsubs)
-                (cdar replacements)))))))
+        (message "replacements %s" (prin1 replacements))
+        (let* ((complete-match (member partial replacements))
+               (replacement (cond ((and complete-match julia-latexsub-greedy) partial)
+                                  ((cdr replacements) (gethash (completing-read "LaTeX completions: " replacements) julia-mode-latexsubs))
+                                  (t (car replacements)))))
+          (cons beg replacement))))))
 
 (defun julia-latexsub-or-indent (arg)
   "Either indent according to Julia mode conventions or perform a LaTeX-like symbol substution.
+
+When multiple options match, ask the user to clarify via `completing-read', unless there is a complete match and `julia-latexsub-greedy' is `t'.
 
 Presently, this is not the default. Enable with eg
 
@@ -940,7 +950,7 @@ Presently, this is not the default. Enable with eg
   (if-let (replacement (julia-mode--latexsub-before-point))
       (progn
         (delete-backward-char (- (point) (car replacement)))
-        (insert (cdr replacement)))
+        (insert (gethash (cdr replacement) julia-mode-latexsubs)))
     (julia-indent-line)))
 
 ;; Math insertion in julia. Use it with
