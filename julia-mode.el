@@ -100,7 +100,6 @@ partial match for LaTeX completion, or `nil' when not applicable."
   (save-excursion
     (goto-char beg)
     (when (and (= (char-after) ?\\) (not (eobp)))
-      (forward-char)
       (let ((beg (point)))
         (cl-flet ((next-char-matches? ()
                                       (let* ((end (1+ (point)))
