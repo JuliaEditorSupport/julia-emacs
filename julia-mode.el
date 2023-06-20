@@ -933,7 +933,7 @@ buffer where the LaTeX symbol starts."
 
 Presently, this is not the default. Enable with eg
 
-(define-key julia-mode-map (kbd \"TAB\") \'julia-latexsub-or-indent)
+(define-key julia-mode-map (kbd \"TAB\") 'julia-latexsub-or-indent)
 
  in your `julia-mode-hook'."
   (interactive "*i")
