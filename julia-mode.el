@@ -68,20 +68,28 @@ unicode for LaTeX even if disabled."
   :type 'boolean)
 
 (defconst julia-mode--latexsubs-partials
-  (let ((table (make-hash-table :test 'equal)))
-    (maphash (lambda (latex _subst)
-               (cl-assert (string= (substring latex 0 1) "\\") nil
-                          "LaTeX substitution does not start with \\.")
-               (let ((len (length latex)))
-                 (cl-assert (< 1 len) nil "Trivially short LaTeX subtitution")
-                 ;; for \foo, put f, fo, foo into the table
-                 (cl-loop for i from 2 to len
-                          do (puthash (substring latex 1 i) t table))))
-             julia-mode-latexsubs)
-    table)
+  (let ((table-unordered (make-hash-table :test 'equal))
+        (table-ordered (make-hash-table :test 'equal)))
+    (cl-flet ((_append (key replacement)
+                       (puthash key (cons replacement (gethash key table-unordered nil)) table-unordered)))
+      ;; accumulate partials
+      (maphash (lambda (latex replacement)
+                 (cl-assert (string= (substring latex 0 1) "\\") nil
+                            "LaTeX substitution does not start with \\.")
+                 (let ((len (length latex)))
+                   (cl-assert (< 1 len) nil "Trivially short LaTeX subtitution")
+                   ;; for \foo, put f, fo, foo into the table
+                   (cl-loop for i from 2 to len
+                            do (_append (substring latex 1 i) (cons latex replacement)))))
+               julia-mode-latexsubs)
+      ;; order by LaTeX part
+      (maphash (lambda (partial replacements)
+                 (puthash partial (sort replacements (lambda (a b) (string< (car a) (car b)))) table-ordered))
+               table-unordered))
+    table-ordered)
   "A hash table containing all partial strings from the LaTeX abbreviations in
-`julia-mode-latexsubs' as keys. Values are always `t', the purpose is to
-represent a set.")
+`julia-mode-latexsubs' as keys. Values are lists of the `(cons latex replacement)`,
+ordered by the `latex` part.")
 
 (defun julia-mode--latexsubs-longest-partial-end (beg)
   "Starting at `beg' (should be the  \"\\\"), return the end of the longest
@@ -92,10 +100,10 @@ partial match for LaTeX completion, or `nil' when not applicable."
       (forward-char)
       (let ((beg (point)))
         (cl-flet ((next-char-matches? ()
-                    (let* ((end (1+ (point)))
-                           (str (buffer-substring-no-properties beg end))
-                           (valid? (gethash str julia-mode--latexsubs-partials)))
-                      valid?)))
+                                      (let* ((end (1+ (point)))
+                                             (str (buffer-substring-no-properties beg end))
+                                             (valid? (gethash str julia-mode--latexsubs-partials)))
+                                        valid?)))
           (while (and (not (eobp)) (next-char-matches?))
             (forward-char)))
         (point)))))
@@ -907,6 +915,33 @@ buffer where the LaTeX symbol starts."
                    (end (+ beg (length name))))
           (abbrev-insert symb name beg end)))
     #'ignore))
+
+(defun julia-mode--latexsub-before-point ()
+  "When there is a LaTeX substitution that can be made before the point, return (CONS BEG SUBSITUTION).
+
+`beg' is the position of the `\`, `substitution' is the replacement. When multiple options match, ask the user to clarify via `completing-read'"
+  (when-let (beg (julia--latexsub-start-symbol))
+    (let ((partial (buffer-substring-no-properties (1+ beg) (point))))
+      (when-let (replacements (gethash partial julia-mode--latexsubs-partials))
+        (cons beg
+              (if (cdr replacements)
+                  (gethash (completing-read "LaTeX completions: " (mapcar #'car replacements)) julia-mode-latexsubs)
+                (cdar replacements)))))))
+
+(defun julia-latexsub-or-indent (arg)
+  "Either indent according to Julia mode conventions or perform a LaTeX-like symbol substution.
+
+Presently, this is not the default. Enable with eg
+
+(define-key julia-mode-map (kbd \"TAB\") \'julia-latexsub-or-indent)
+
+ in your `julia-mode-hook'."
+  (interactive "*i")
+  (if-let (replacement (julia-mode--latexsub-before-point))
+      (progn
+        (delete-backward-char (- (point) (car replacement)))
+        (insert (cdr replacement)))
+    (julia-indent-line)))
 
 ;; Math insertion in julia. Use it with
 ;; (add-hook 'julia-mode-hook 'julia-math-mode)
