@@ -759,7 +759,7 @@ Return nil if point is not in a function, otherwise point."
   `(("Function" ,julia-function-regex 1)
     ("Function" ,julia-function-assignment-regex 1)
     ("Const" ,julia-const-def-regex 1)
-    ("Struct" ,julia-type-regex 1)
+    ("Type" ,julia-type-regex 1)
     ("Require" " *\\(\\brequire\\)(\\([^ \t\n)]*\\)" 2)
     ("Include" " *\\(\\binclude\\)(\\([^ \t\n)]*\\)" 2)))
 
