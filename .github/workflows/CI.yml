@@ -26,9 +26,10 @@ jobs:
           - 28.2
         ignore_warnings:
           - true
-        include:
-          - emacs_version: snapshot
-            ignore_warnings: true
+        # NOTE commented out because failure notifications are a distraction
+        # include:
+        #   - emacs_version: snapshot
+        #     ignore_warnings: true
     steps:
     - uses: actions/checkout@v2
     - uses: purcell/setup-emacs@master
