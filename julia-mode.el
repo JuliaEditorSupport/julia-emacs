@@ -291,7 +291,7 @@ partial match for LaTeX completion, or `nil' when not applicable."
 (defconst julia-const-def-regex
   (rx
    symbol-start "const" (1+ space)
-   (group (minimal-match (seq symbol-start (one-or-more anychar) symbol-end)))
+   (group (minimal-match (seq symbol-start (one-or-more anything) symbol-end)))
    (zero-or-more space)
    "="))
 
