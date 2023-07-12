@@ -288,6 +288,13 @@ partial match for LaTeX completion, or `nil' when not applicable."
                        "abstract type" "primitive type" "struct" "mutable struct")
       (1+ space) (group (1+ (or word (syntax symbol))))))
 
+(defconst julia-const-def-regex
+  (rx
+   bol (zero-or-more space)
+   "const" space
+   (group (one-or-more alnum)) (zero-or-more space)
+   "=" (not (any "="))))
+
 (defconst julia-type-annotation-regex
   (rx "::" (0+ space) (group (1+ (or word (syntax symbol))))))
 
@@ -337,6 +344,10 @@ partial match for LaTeX completion, or `nil' when not applicable."
    (list julia-function-regex 1 'font-lock-function-name-face)
    (list julia-function-assignment-regex 1 'font-lock-function-name-face)
    (list julia-type-regex 1 'font-lock-type-face)
+   ;; Per the elisp manual, font-lock-variable-name-face is for variables being defined or
+   ;; declared. It is difficult identify this consistently in julia (see issue #2). For now,
+   ;; we only font-lock constant definitions.
+   (list julia-const-def-regex 1 'font-lock-variable-name-face)
    ;; font-lock-type-face is for the point of type definition rather
    ;; than usage, but using for type annotations is an acceptable pun.
    (list julia-type-annotation-regex 1 'font-lock-type-face)
@@ -791,22 +802,12 @@ Return nil if point is not in a function, otherwise point."
 ;;; IMENU
 (defvar julia-imenu-generic-expression
   ;; don't use syntax classes, screws egrep
-  '(("Function (_)" "[ \t]*function[ \t]+\\(_[^ \t\n]*\\)" 1)
-    ("Function" "^[ \t]*function[ \t]+\\([^_][^\t\n]*\\)" 1)
-    ("Const" "[ \t]*const \\([^ \t\n]*\\)" 1)
-    ("Type"  "^[ \t]*[a-zA-Z0-9_]*type[a-zA-Z0-9_]* \\([^ \t\n]*\\)" 1)
-    ("Require"      " *\\(\\brequire\\)(\\([^ \t\n)]*\\)" 2)
-    ("Include"      " *\\(\\binclude\\)(\\([^ \t\n)]*\\)" 2)
-    ;; ("Classes" "^.*setClass(\\(.*\\)," 1)
-    ;; ("Coercions" "^.*setAs(\\([^,]+,[^,]*\\)," 1) ; show from and to
-    ;; ("Generics" "^.*setGeneric(\\([^,]*\\)," 1)
-    ;; ("Methods" "^.*set\\(Group\\|Replace\\)?Method(\"\\(.+\\)\"," 2)
-    ;; ;;[ ]*\\(signature=\\)?(\\(.*,?\\)*\\)," 1)
-    ;; ;;
-    ;; ;;("Other" "^\\(.+\\)\\s-*<-[ \t\n]*[^\\(function\\|read\\|.*data\.frame\\)]" 1)
-    ;; ("Package" "^.*\\(library\\|require\\)(\\(.*\\)," 2)
-    ;; ("Data" "^\\(.+\\)\\s-*<-[ \t\n]*\\(read\\|.*data\.frame\\).*(" 1)))
-    ))
+  `(("Function" ,julia-function-regex 1)
+    ("Function" ,julia-function-assignment-regex 1)
+    ("Const" ,julia-const-def-regex 1)
+    ("Type" ,julia-type-regex 1)
+    ("Require" " *\\(\\brequire\\)(\\([^ \t\n)]*\\)" 2)
+    ("Include" " *\\(\\binclude\\)(\\([^ \t\n)]*\\)" 2)))
 
 ;;;###autoload
 (define-derived-mode julia-mode prog-mode "Julia"
