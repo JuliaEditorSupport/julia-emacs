@@ -290,10 +290,10 @@ partial match for LaTeX completion, or `nil' when not applicable."
 
 (defconst julia-const-def-regex
   (rx
-   bol (zero-or-more space)
-   "const" space
-   (group (one-or-more alnum)) (zero-or-more space)
-   "=" (not (any "="))))
+   symbol-start "const" (1+ space)
+   (group (minimal-match (seq symbol-start (one-or-more anychar) symbol-end)))
+   (zero-or-more space)
+   "="))
 
 (defconst julia-type-annotation-regex
   (rx "::" (0+ space) (group (1+ (or word (syntax symbol))))))

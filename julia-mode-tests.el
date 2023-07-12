@@ -758,6 +758,16 @@ var = func(begin
     (julia--should-font-lock string 11 nil) ; =
     ))
 
+(ert-deftest julia--test-const-def-font-lock-underscores ()
+  (let ((string "@macro const foo_bar = \"bar\""))
+    (julia--should-font-lock string 8 font-lock-keyword-face) ; const
+    (julia--should-font-lock string 12 font-lock-keyword-face) ; const
+    (julia--should-font-lock string 14 font-lock-variable-name-face) ; foo
+    (julia--should-font-lock string 17 font-lock-variable-name-face) ; _
+    (julia--should-font-lock string 20 font-lock-variable-name-face) ; bar
+    (julia--should-font-lock string 22 nil) ; =
+    ))
+
 ;;; Movement
 (ert-deftest julia--test-beginning-of-defun-assn-1 ()
   "Point moves to beginning of single-line assignment function."
