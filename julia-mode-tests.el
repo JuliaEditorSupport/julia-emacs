@@ -768,6 +768,13 @@ var = func(begin
     (julia--should-font-lock string 22 nil) ; =
     ))
 
+(ert-deftest julia--test-!-font-lock ()
+  (let ((string "!@macro foo()"))
+    (julia--should-font-lock string 1 nil)
+    (julia--should-font-lock string 2 'julia-macro-face)
+    (julia--should-font-lock string 7 'julia-macro-face)
+    (julia--should-font-lock string 8 nil)))
+
 ;;; Movement
 (ert-deftest julia--test-beginning-of-defun-assn-1 ()
   "Point moves to beginning of single-line assignment function."

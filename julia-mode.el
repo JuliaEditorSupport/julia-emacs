@@ -115,6 +115,10 @@ partial match for LaTeX completion, or `nil' when not applicable."
   (let ((table (make-syntax-table)))
     (modify-syntax-entry ?_ "_" table)
     (modify-syntax-entry ?@ "_" table)
+
+    ;; "!" can be part of both operators (!=) and variable names (append!). Here, we treat
+    ;; it as being part of a variable name. Care must be taken to account for the special
+    ;; case where "!" prefixes a variable name and acts as an operator (e.g. !any(...)).
     (modify-syntax-entry ?! "_" table)
     (modify-syntax-entry ?# "< 14" table)  ; # single-line and multiline start
     (modify-syntax-entry ?= ". 23bn" table)
@@ -267,6 +271,8 @@ partial match for LaTeX completion, or `nil' when not applicable."
       ;; The function name itself
       (group (1+ (or word (syntax symbol))))))
 
+;; TODO: function definitions of form "x + y = 5" or "!x = true" not currently highlighted
+
 ;; functions of form "f(x) = nothing"
 (defconst julia-function-assignment-regex
   (rx line-start (* (or space "@inline" "@noinline")) symbol-start
@@ -302,7 +308,7 @@ partial match for LaTeX completion, or `nil' when not applicable."
   (rx "<:" (0+ space) (group (1+ (or word (syntax symbol)))) (0+ space) (or "\n" "{" "}" "end" ",")))
 
 (defconst julia-macro-regex
-  (rx symbol-start (group "@" (1+ (or word (syntax symbol))))))
+  (rx symbol-start (0+ ?!) (group "@" (1+ (or word (syntax symbol))))))
 
 (defconst julia-keyword-regex
   (regexp-opt
@@ -329,7 +335,7 @@ partial match for LaTeX completion, or `nil' when not applicable."
    ;; highlighted as a keyword.
    (list julia-quoted-symbol-regex 1 ''julia-quoted-symbol-face)
    (cons julia-keyword-regex 'font-lock-keyword-face)
-   (cons julia-macro-regex ''julia-macro-face)
+   (list julia-macro-regex 1 ''julia-macro-face)
    (cons
     (regexp-opt
      ;; constants defined in Core plus true/false
