@@ -963,6 +963,8 @@ end" 'end-of-defun "n == 0" "return fact(x)[ \n]+end" 'end 2))
   (should (equal (julia--call-latexsub-exit-function
                   "\\kappa\\alpha(" 7 13 "\\alpha" t)
                  "\\kappaα("))
+  ;; Test that whitespace is stripped from `:exit-function' NAME for compatibility with helm
+  (should (equal (julia--call-latexsub-exit-function "x\\alpha " 2 8 "\\alpha " t)  "xα "))
   ;; test that LaTeX not expanded when `julia-automatic-latexsub' is nil
   (should (equal (julia--call-latexsub-exit-function "\\alpha" 1 7 "\\alpha" nil) "\\alpha"))
   (should (equal (julia--call-latexsub-exit-function "x\\alpha " 2 8 "\\alpha" nil)  "x\\alpha "))
