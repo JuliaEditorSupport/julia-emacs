@@ -910,8 +910,12 @@ buffer where the LaTeX symbol starts."
         ;; <https://github.com/abo-abo/swiper/issues/2345>). Instead of automatic
         ;; expansion, user can either enable `abbrev-mode' or call `expand-abbrev'.
         (when-let (((eq status 'finished))
-                   (symb (abbrev-symbol name julia-latexsub-abbrev-table))
-                   (end (+ beg (length name))))
+                   ;; helm-mode passes NAME with an extra whitespace at the end. Since
+                   ;; `julia--latexsub-start-symbol' won't include whitespace, we can safely
+                   ;; strip whitespace.
+                   (clean-name (string-trim-right name))
+                   (symb (abbrev-symbol clean-name julia-latexsub-abbrev-table))
+                   (end (+ beg (length clean-name))))
           (abbrev-insert symb name beg end)))
     #'ignore))
 
