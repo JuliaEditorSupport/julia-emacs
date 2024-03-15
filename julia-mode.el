@@ -913,7 +913,7 @@ buffer where the LaTeX symbol starts."
                    ;; helm-mode passes NAME with an extra whitespace at the end. Since
                    ;; `julia--latexsub-start-symbol' won't include whitespace, we can safely
                    ;; strip whitespace.
-                   (clean-name (string-clean-whitespace name))
+                   (clean-name (string-trim-right name))
                    (symb (abbrev-symbol clean-name julia-latexsub-abbrev-table))
                    (end (+ beg (length clean-name))))
           (abbrev-insert symb name beg end)))
