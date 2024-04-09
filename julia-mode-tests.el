@@ -64,28 +64,36 @@
   "Assert that TEXT at position POS gets font-locked with FACE in `julia-mode'."
   `(should (eq ,face (julia--get-font-lock ,text ,pos))))
 
+(defun julia--should-move-point-helper (text fun from to &optional end arg)
+  "Takes the same arguments as `julia--should-move-point', returns a cons of the expected and the actual point."
+  (with-temp-buffer
+    (julia-mode)
+    (insert text)
+    (indent-region (point-min) (point-max))
+    (goto-char (point-min))
+    (if (stringp from)
+        (re-search-forward from)
+      (goto-char from))
+    (funcall fun arg)
+    (let ((actual-to (point))
+          (expected-to
+           (if (stringp to)
+               (progn (goto-char (point-min))
+                      (re-search-forward to)
+                      (if end (goto-char (match-end 0))
+                        (goto-char (match-beginning 0))
+                        (point-at-bol)))
+             to)))
+      (cons expected-to actual-to))))
+
 (defmacro julia--should-move-point (text fun from to &optional end arg)
   "With TEXT in `julia-mode', after calling FUN, the point should move FROM\
 to TO.  If FROM is a string, move the point to matching string before calling
 function FUN.  If TO is a string, match resulting point to point a beginning of
 matching line or end of match if END is non-nil.  Optional ARG is passed to FUN."
   (declare (indent defun))
-  `(with-temp-buffer
-     (julia-mode)
-     (insert ,text)
-     (indent-region (point-min) (point-max))
-     (goto-char (point-min))
-     (if (stringp ,from)
-         (re-search-forward ,from)
-       (goto-char ,from))
-     (funcall ,fun ,arg)
-     (should (eq (point) (if (stringp ,to)
-                             (progn (goto-char (point-min))
-                                    (re-search-forward ,to)
-                                    (if ,end (goto-char (match-end 0))
-                                      (goto-char (match-beginning 0))
-                                      (point-at-bol)))
-                           ,to)))))
+  `(let ((positions (julia--should-move-point-helper ,text ,fun ,from ,to ,end ,arg)))
+     (should (eq (car positions) (cdr positions)))))
 
 ;;; indent tests
 
