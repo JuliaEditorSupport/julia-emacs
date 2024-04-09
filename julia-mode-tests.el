@@ -64,7 +64,7 @@
   "Assert that TEXT at position POS gets font-locked with FACE in `julia-mode'."
   `(should (eq ,face (julia--get-font-lock ,text ,pos))))
 
-(defun julia--should-move-point-helper (text fun from to &optional end arg)
+(defun julia--should-move-point-helper (text fun from to &optional end &rest args)
   "Takes the same arguments as `julia--should-move-point', returns a cons of the expected and the actual point."
   (with-temp-buffer
     (julia-mode)
@@ -74,25 +74,26 @@
     (if (stringp from)
         (re-search-forward from)
       (goto-char from))
-    (funcall fun arg)
+    (apply fun args)
     (let ((actual-to (point))
           (expected-to
            (if (stringp to)
                (progn (goto-char (point-min))
                       (re-search-forward to)
-                      (if end (goto-char (match-end 0))
+                      (if end
+                          (goto-char (match-end 0))
                         (goto-char (match-beginning 0))
                         (point-at-bol)))
              to)))
       (cons expected-to actual-to))))
 
-(defmacro julia--should-move-point (text fun from to &optional end arg)
+(defmacro julia--should-move-point (text fun from to &optional end &rest args)
   "With TEXT in `julia-mode', after calling FUN, the point should move FROM\
 to TO.  If FROM is a string, move the point to matching string before calling
 function FUN.  If TO is a string, match resulting point to point a beginning of
 matching line or end of match if END is non-nil.  Optional ARG is passed to FUN."
   (declare (indent defun))
-  `(let ((positions (julia--should-move-point-helper ,text ,fun ,from ,to ,end ,arg)))
+  `(let ((positions (julia--should-move-point-helper ,text ,fun ,from ,to ,end ,@args)))
      (should (eq (car positions) (cdr positions)))))
 
 ;;; indent tests
@@ -892,10 +893,10 @@ return n * fact(n-1)
 end
 end
 return fact(x)
-end" 'end-of-defun "n == 0" "end[ \n]+end\n" 'end))
+end" 'julia-end-of-defun "function fact(n)" "end[ \n]+end" 'end))
 
 (ert-deftest julia--test-end-of-defun-nested-2 ()
-  "Point should move to end of outer function when called from inner with prefix."
+  "Point should move to end of outer function when called from outer."
   (julia--should-move-point
     "function f(x)
 function fact(n)
@@ -906,7 +907,7 @@ return n * fact(n-1)
 end
 end
 return fact(x)
-end" 'end-of-defun "n == 0" "return fact(x)[ \n]+end" 'end 2))
+end" 'julia-end-of-defun "function f(x)" "return fact(x)[ \n]+end" 'end))
 
 ;;;
 ;;; latex completion tests
