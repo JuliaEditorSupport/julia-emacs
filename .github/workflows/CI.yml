@@ -24,6 +24,9 @@ jobs:
           - 27.2
           - 28.1
           - 28.2
+          - 29.1
+          - 29.2
+          - 29.3
         ignore_warnings:
           - true
         # NOTE commented out because failure notifications are a distraction
