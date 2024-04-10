@@ -71,11 +71,22 @@ unicode for LaTeX even if disabled."
   "When `t', `julia-latexsub-or-indent' does not offer options when a complete match is found. Eg for \"\\bar\", \"\\barcap\" etc will not be offered in a prompt."
   :type 'boolean)
 
+(defun julia-latexsub-selector-completing-read (replacements)
+  "Use `completing-read' to pick an item from REPLACEMENTS."
+  (completing-read "LaTeX completions: " replacements (lambda (&rest _) t) t))
+
+(defvar julia-latexsub-selector 'julia-latexsub-selector-completing-read
+  "A function that is called when the `julia-latexsub-or-indent' finds multiple matches for a prefix.
+
+The argument is a list of strings. The function should ALWAYS return an item from this list, otherwise an error occurs.
+
+The default implementation uses `completing-read'.")
+
 (defconst julia-mode--latexsubs-partials
   (let ((table-unordered (make-hash-table :test 'equal))
         (table-ordered (make-hash-table :test 'equal)))
     (cl-flet ((_append (key replacement)
-                       (puthash key (cons replacement (gethash key table-unordered nil)) table-unordered)))
+                (puthash key (cons replacement (gethash key table-unordered nil)) table-unordered)))
       ;; accumulate partials
       (maphash (lambda (latex _unicode)
                  (cl-assert (string= (substring latex 0 1) "\\") nil
@@ -935,20 +946,24 @@ buffer where the LaTeX symbol starts."
 
 `beg' is the position of the `\`, `latex' is the string to replace, including the `\`.
 
-When multiple options match, ask the user to clarify via `completing-read', unless there is a complete match and `julia-latexsub-greedy' is `t'."
+When multiple options match, ask the user to clarify via `julia-latexsub-selector', unless there is a complete match and `julia-latexsub-greedy' is `t'."
   (when-let (beg (julia--latexsub-start-symbol))
     (let ((partial (buffer-substring-no-properties beg (point))))
       (when-let (replacements (gethash partial julia-mode--latexsubs-partials))
         (let* ((complete-match (member partial replacements))
-               (replacement (cond ((and complete-match julia-latexsub-greedy) partial)
-                                  ((cdr replacements) (completing-read "LaTeX completions: " replacements))
-                                  (t (car replacements)))))
+               (replacement (cond
+                             ;; complete match w/ greedy
+                             ((and complete-match julia-latexsub-greedy) partial)
+                             ;; multiple replacements, ask user
+                             ((cdr replacements) (funcall julia-latexsub-selector replacements))
+                             ;; single replacement, pick that
+                             (t (car replacements)))))
           (cons beg replacement))))))
 
-(defun julia-latexsub-or-indent (arg)
+(defun julia-latexsub-or-indent  (arg)
   "Either indent according to Julia mode conventions or perform a LaTeX-like symbol substution.
 
-When multiple options match, ask the user to clarify via `completing-read', unless there is a complete match and `julia-latexsub-greedy' is `t'.
+When multiple options match, ask the user to clarify via `julia-latexsub-selector', unless there is a complete match and `julia-latexsub-greedy' is `t'.
 
 Presently, this is not the default. Enable with eg
 
