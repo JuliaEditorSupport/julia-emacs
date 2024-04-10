@@ -951,16 +951,16 @@ When multiple options match, ask the user to clarify via `julia-latexsub-selecto
     (let ((partial (buffer-substring-no-properties beg (point))))
       (when-let (replacements (gethash partial julia-mode--latexsubs-partials))
         (let* ((complete-match (member partial replacements))
-               (replacement (cond
-                             ;; complete match w/ greedy
-                             ((and complete-match julia-latexsub-greedy) partial)
-                             ;; multiple replacements, ask user
-                             ((cdr replacements) (funcall julia-latexsub-selector replacements))
-                             ;; single replacement, pick that
-                             (t (car replacements)))))
-          (cons beg replacement))))))
+               (latex (cond
+                       ;; complete match w/ greedy
+                       ((and complete-match julia-latexsub-greedy) partial)
+                       ;; multiple replacements, ask user
+                       ((cdr replacements) (funcall julia-latexsub-selector replacements))
+                       ;; single replacement, pick that
+                       (t (car replacements)))))
+          (cons beg latex))))))
 
-(defun julia-latexsub-or-indent  (arg)
+(defun julia-latexsub-or-indent (arg)
   "Either indent according to Julia mode conventions or perform a LaTeX-like symbol substution.
 
 When multiple options match, ask the user to clarify via `julia-latexsub-selector', unless there is a complete match and `julia-latexsub-greedy' is `t'.
@@ -969,7 +969,7 @@ Presently, this is not the default. Enable with eg
 
 (define-key julia-mode-map (kbd \"TAB\") 'julia-latexsub-or-indent)
 
- in your `julia-mode-hook'."
+eg in your `julia-mode-hook'."
   (interactive "*i")
   (if-let (replacement (julia-mode--latexsub-before-point))
       (progn

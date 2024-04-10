@@ -1009,6 +1009,49 @@ hello world
              (string-to-syntax "\\")
              (syntax-after 13)))))
 
+;;; testing julia-latexsub-or-indent
+
+(cl-defun julia-test-latexsub-or-indent (from &key (position (1+ (length from))) (greedy t))
+  "Utility function to test `julia-latexsub-or-indent'.
+
+This is how it works:
+
+1. FROM is inserted in a buffer.
+
+2. The point is moved to POSITION.
+
+3. `julia-latexsub-or-indent' is called on the buffer.
+
+If `julia-latexsub-selector' is called, it selects the first replacement, which is also placed in SELECTION (otherwise it is NIL).
+
+Return a cons of the
+
+1. buffer contents
+
+2. the replacement of SELECTION when not nil.
+
+The latter can be used to construct test comparisons."
+  (let* ((selection)
+         (julia-latexsub-selector
+          (lambda (replacements)
+            (setf selection (car replacements))
+            selection))
+         (julia-latexsub-greedy greedy))
+    (cons (with-temp-buffer
+            (insert from)
+            (goto-char position)
+            (julia-latexsub-or-indent t)
+            (buffer-string))
+          (gethash selection julia-mode-latexsubs))))
+
+(ert-deftest julia--test-latexsub-or-indent ()
+  (should (equal (julia-test-latexsub-or-indent "\\circ") '("∘")))
+  (let ((result (julia-test-latexsub-or-indent "\\circXX" :position 5)))
+    (should (equal (car result) (concat (cdr result) "cXX"))))
+  (let ((result (julia-test-latexsub-or-indent "\\circ" :greedy nil)))
+    (should (equal (car result) (cdr result))))
+  (should (equal (julia-test-latexsub-or-indent "\\alpha") '("α"))))
+
 ;;;
 ;;; run all tests
 ;;;
