@@ -938,12 +938,10 @@ buffer where the LaTeX symbol starts."
 When multiple options match, ask the user to clarify via `completing-read', unless there is a complete match and `julia-latexsub-greedy' is `t'."
   (when-let (beg (julia--latexsub-start-symbol))
     (let ((partial (buffer-substring-no-properties beg (point))))
-      (message "partial %s" partial)
       (when-let (replacements (gethash partial julia-mode--latexsubs-partials))
-        (message "replacements %s" (prin1 replacements))
         (let* ((complete-match (member partial replacements))
                (replacement (cond ((and complete-match julia-latexsub-greedy) partial)
-                                  ((cdr replacements) (gethash (completing-read "LaTeX completions: " replacements) julia-mode-latexsubs))
+                                  ((cdr replacements) (completing-read "LaTeX completions: " replacements))
                                   (t (car replacements)))))
           (cons beg replacement))))))
 
