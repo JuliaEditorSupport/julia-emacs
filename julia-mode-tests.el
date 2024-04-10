@@ -36,11 +36,6 @@
 
 ;;; Code:
 
-;; We can't use cl-lib whilst supporting Emacs 23 users who don't use
-;; ELPA.
-(with-no-warnings
-  (require 'cl)) ;; incf, decf, plusp
-
 (require 'julia-mode)
 (require 'ert)
 
@@ -69,28 +64,36 @@
   "Assert that TEXT at position POS gets font-locked with FACE in `julia-mode'."
   `(should (eq ,face (julia--get-font-lock ,text ,pos))))
 
+(defun julia--should-move-point-helper (text fun from to &optional end arg)
+  "Takes the same arguments as `julia--should-move-point', returns a cons of the expected and the actual point."
+  (with-temp-buffer
+    (julia-mode)
+    (insert text)
+    (indent-region (point-min) (point-max))
+    (goto-char (point-min))
+    (if (stringp from)
+        (re-search-forward from)
+      (goto-char from))
+    (funcall fun arg)
+    (let ((actual-to (point))
+          (expected-to
+           (if (stringp to)
+               (progn (goto-char (point-min))
+                      (re-search-forward to)
+                      (if end (goto-char (match-end 0))
+                        (goto-char (match-beginning 0))
+                        (point-at-bol)))
+             to)))
+      (cons expected-to actual-to))))
+
 (defmacro julia--should-move-point (text fun from to &optional end arg)
   "With TEXT in `julia-mode', after calling FUN, the point should move FROM\
 to TO.  If FROM is a string, move the point to matching string before calling
 function FUN.  If TO is a string, match resulting point to point a beginning of
 matching line or end of match if END is non-nil.  Optional ARG is passed to FUN."
   (declare (indent defun))
-  `(with-temp-buffer
-     (julia-mode)
-     (insert ,text)
-     (indent-region (point-min) (point-max))
-     (goto-char (point-min))
-     (if (stringp ,from)
-         (re-search-forward ,from)
-       (goto-char ,from))
-     (funcall ,fun ,arg)
-     (should (eq (point) (if (stringp ,to)
-                             (progn (goto-char (point-min))
-                                    (re-search-forward ,to)
-                                    (if ,end (goto-char (match-end 0))
-                                      (goto-char (match-beginning 0))
-                                      (point-at-bol)))
-                           ,to)))))
+  `(let ((positions (julia--should-move-point-helper ,text ,fun ,from ,to ,end ,arg)))
+     (should (eq (car positions) (cdr positions)))))
 
 ;;; indent tests
 
@@ -749,6 +752,32 @@ var = func(begin
         (julia--should-font-lock c (- (length c) 1) font-lock-string-face)
         (julia--should-font-lock c (length c) nil)))))
 
+(ert-deftest julia--test-const-def-font-lock ()
+  (let ((string "const foo = \"bar\""))
+    (julia--should-font-lock string 1 font-lock-keyword-face) ; const
+    (julia--should-font-lock string 5 font-lock-keyword-face) ; const
+    (julia--should-font-lock string 7 font-lock-variable-name-face) ; foo
+    (julia--should-font-lock string 9 font-lock-variable-name-face) ; foo
+    (julia--should-font-lock string 11 nil) ; =
+    ))
+
+(ert-deftest julia--test-const-def-font-lock-underscores ()
+  (let ((string "@macro const foo_bar = \"bar\""))
+    (julia--should-font-lock string 8 font-lock-keyword-face) ; const
+    (julia--should-font-lock string 12 font-lock-keyword-face) ; const
+    (julia--should-font-lock string 14 font-lock-variable-name-face) ; foo
+    (julia--should-font-lock string 17 font-lock-variable-name-face) ; _
+    (julia--should-font-lock string 20 font-lock-variable-name-face) ; bar
+    (julia--should-font-lock string 22 nil) ; =
+    ))
+
+(ert-deftest julia--test-!-font-lock ()
+  (let ((string "!@macro foo()"))
+    (julia--should-font-lock string 1 nil)
+    (julia--should-font-lock string 2 'julia-macro-face)
+    (julia--should-font-lock string 7 'julia-macro-face)
+    (julia--should-font-lock string 8 nil)))
+
 ;;; Movement
 (ert-deftest julia--test-beginning-of-defun-assn-1 ()
   "Point moves to beginning of single-line assignment function."
@@ -937,6 +966,8 @@ end" 'end-of-defun "n == 0" "return fact(x)[ \n]+end" 'end 2))
   (should (equal (julia--call-latexsub-exit-function
                   "\\kappa\\alpha(" 7 13 "\\alpha" t)
                  "\\kappaα("))
+  ;; Test that whitespace is stripped from `:exit-function' NAME for compatibility with helm
+  (should (equal (julia--call-latexsub-exit-function "x\\alpha " 2 8 "\\alpha " t)  "xα "))
   ;; test that LaTeX not expanded when `julia-automatic-latexsub' is nil
   (should (equal (julia--call-latexsub-exit-function "\\alpha" 1 7 "\\alpha" nil) "\\alpha"))
   (should (equal (julia--call-latexsub-exit-function "x\\alpha " 2 8 "\\alpha" nil)  "x\\alpha "))

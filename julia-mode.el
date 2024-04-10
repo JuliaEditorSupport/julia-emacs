@@ -126,6 +126,10 @@ partial match for LaTeX completion, or `nil' when not applicable."
   (let ((table (make-syntax-table)))
     (modify-syntax-entry ?_ "_" table)
     (modify-syntax-entry ?@ "_" table)
+
+    ;; "!" can be part of both operators (!=) and variable names (append!). Here, we treat
+    ;; it as being part of a variable name. Care must be taken to account for the special
+    ;; case where "!" prefixes a variable name and acts as an operator (e.g. !any(...)).
     (modify-syntax-entry ?! "_" table)
     (modify-syntax-entry ?# "< 14" table)  ; # single-line and multiline start
     (modify-syntax-entry ?= ". 23bn" table)
@@ -278,6 +282,8 @@ partial match for LaTeX completion, or `nil' when not applicable."
       ;; The function name itself
       (group (1+ (or word (syntax symbol))))))
 
+;; TODO: function definitions of form "x + y = 5" or "!x = true" not currently highlighted
+
 ;; functions of form "f(x) = nothing"
 (defconst julia-function-assignment-regex
   (rx line-start (* (or space "@inline" "@noinline")) symbol-start
@@ -299,6 +305,13 @@ partial match for LaTeX completion, or `nil' when not applicable."
                        "abstract type" "primitive type" "struct" "mutable struct")
       (1+ space) (group (1+ (or word (syntax symbol))))))
 
+(defconst julia-const-def-regex
+  (rx
+   symbol-start "const" (1+ space)
+   (group (minimal-match (seq symbol-start (one-or-more anything) symbol-end)))
+   (zero-or-more space)
+   "="))
+
 (defconst julia-type-annotation-regex
   (rx "::" (0+ space) (group (1+ (or word (syntax symbol))))))
 
@@ -306,7 +319,7 @@ partial match for LaTeX completion, or `nil' when not applicable."
   (rx "<:" (0+ space) (group (1+ (or word (syntax symbol)))) (0+ space) (or "\n" "{" "}" "end" ",")))
 
 (defconst julia-macro-regex
-  (rx symbol-start (group "@" (1+ (or word (syntax symbol))))))
+  (rx symbol-start (0+ ?!) (group "@" (1+ (or word (syntax symbol))))))
 
 (defconst julia-keyword-regex
   (regexp-opt
@@ -333,7 +346,7 @@ partial match for LaTeX completion, or `nil' when not applicable."
    ;; highlighted as a keyword.
    (list julia-quoted-symbol-regex 1 ''julia-quoted-symbol-face)
    (cons julia-keyword-regex 'font-lock-keyword-face)
-   (cons julia-macro-regex ''julia-macro-face)
+   (list julia-macro-regex 1 ''julia-macro-face)
    (cons
     (regexp-opt
      ;; constants defined in Core plus true/false
@@ -348,6 +361,10 @@ partial match for LaTeX completion, or `nil' when not applicable."
    (list julia-function-regex 1 'font-lock-function-name-face)
    (list julia-function-assignment-regex 1 'font-lock-function-name-face)
    (list julia-type-regex 1 'font-lock-type-face)
+   ;; Per the elisp manual, font-lock-variable-name-face is for variables being defined or
+   ;; declared. It is difficult identify this consistently in julia (see issue #2). For now,
+   ;; we only font-lock constant definitions.
+   (list julia-const-def-regex 1 'font-lock-variable-name-face)
    ;; font-lock-type-face is for the point of type definition rather
    ;; than usage, but using for type annotations is an acceptable pun.
    (list julia-type-annotation-regex 1 'font-lock-type-face)
@@ -802,22 +819,12 @@ Return nil if point is not in a function, otherwise point."
 ;;; IMENU
 (defvar julia-imenu-generic-expression
   ;; don't use syntax classes, screws egrep
-  '(("Function (_)" "[ \t]*function[ \t]+\\(_[^ \t\n]*\\)" 1)
-    ("Function" "^[ \t]*function[ \t]+\\([^_][^\t\n]*\\)" 1)
-    ("Const" "[ \t]*const \\([^ \t\n]*\\)" 1)
-    ("Type"  "^[ \t]*[a-zA-Z0-9_]*type[a-zA-Z0-9_]* \\([^ \t\n]*\\)" 1)
-    ("Require"      " *\\(\\brequire\\)(\\([^ \t\n)]*\\)" 2)
-    ("Include"      " *\\(\\binclude\\)(\\([^ \t\n)]*\\)" 2)
-    ;; ("Classes" "^.*setClass(\\(.*\\)," 1)
-    ;; ("Coercions" "^.*setAs(\\([^,]+,[^,]*\\)," 1) ; show from and to
-    ;; ("Generics" "^.*setGeneric(\\([^,]*\\)," 1)
-    ;; ("Methods" "^.*set\\(Group\\|Replace\\)?Method(\"\\(.+\\)\"," 2)
-    ;; ;;[ ]*\\(signature=\\)?(\\(.*,?\\)*\\)," 1)
-    ;; ;;
-    ;; ;;("Other" "^\\(.+\\)\\s-*<-[ \t\n]*[^\\(function\\|read\\|.*data\.frame\\)]" 1)
-    ;; ("Package" "^.*\\(library\\|require\\)(\\(.*\\)," 2)
-    ;; ("Data" "^\\(.+\\)\\s-*<-[ \t\n]*\\(read\\|.*data\.frame\\).*(" 1)))
-    ))
+  `(("Function" ,julia-function-regex 1)
+    ("Function" ,julia-function-assignment-regex 1)
+    ("Const" ,julia-const-def-regex 1)
+    ("Type" ,julia-type-regex 1)
+    ("Require" " *\\(\\brequire\\)(\\([^ \t\n)]*\\)" 2)
+    ("Include" " *\\(\\binclude\\)(\\([^ \t\n)]*\\)" 2)))
 
 ;;;###autoload
 (define-derived-mode julia-mode prog-mode "Julia"
@@ -914,8 +921,12 @@ buffer where the LaTeX symbol starts."
         ;; <https://github.com/abo-abo/swiper/issues/2345>). Instead of automatic
         ;; expansion, user can either enable `abbrev-mode' or call `expand-abbrev'.
         (when-let (((eq status 'finished))
-                   (symb (abbrev-symbol name julia-latexsub-abbrev-table))
-                   (end (+ beg (length name))))
+                   ;; helm-mode passes NAME with an extra whitespace at the end. Since
+                   ;; `julia--latexsub-start-symbol' won't include whitespace, we can safely
+                   ;; strip whitespace.
+                   (clean-name (string-trim-right name))
+                   (symb (abbrev-symbol clean-name julia-latexsub-abbrev-table))
+                   (end (+ beg (length clean-name))))
           (abbrev-insert symb name beg end)))
     #'ignore))
 
