@@ -80,7 +80,7 @@
            (if (stringp to)
                (progn (goto-char (point-min))
                       (re-search-forward to)
-                      (when end
+                      (if end
                           (goto-char (match-end 0))
                         (goto-char (match-beginning 0))
                         (point-at-bol)))
