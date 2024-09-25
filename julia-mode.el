@@ -1,8 +1,8 @@
 ;;; julia-mode.el --- Major mode for editing Julia source code -*- lexical-binding: t -*-
 
-;; Copyright (C) 2009-2014 Julia contributors, 2015-2020 julia-mode contributors
+;; Copyright (C) 2009-2014 Julia contributors, 2015-2024 julia-mode.el contributors
 ;; URL: https://github.com/JuliaEditorSupport/julia-emacs
-;; Version: 0.4
+;; Version: 1.0.0
 ;; Keywords: languages
 ;; Package-Requires: ((emacs "26.1"))
 
