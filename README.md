@@ -21,6 +21,17 @@ Unless you want to develop this package, it is recommended that you use it from 
 (require 'julia-mode)
 ```
 
+Alternatively, if you are using [`use-package`](https://github.com/jwiegley/use-package), which has been [part of Emacs](https://www.gnu.org/software/emacs/manual/html_mono/use-package.html) since version 29.1, you can use
+
+```elisp
+(use-package julia-mode
+  :ensure t)
+```
+
+### A note on versioning
+
+The code has been on a “rolling release” model before version 1.0: not all code changes were accompanied by a version increment. From version 1.0, we follow [semantic versioning](https://semver.org/).
+
 ### Installing from Source
 
 To get the latest version of `julia-mode`, clone this repository and then use:
