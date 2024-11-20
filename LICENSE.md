@@ -1,6 +1,6 @@
 The julia-emacs plugin is licensed under the MIT License.
 
-> Copyright (c) 2009-2016: Jeff Bezanson, Stefan Karpinski, Viral B. Shah,
+> Copyright (c) 2009-2024: Jeff Bezanson, Stefan Karpinski, Viral B. Shah,
 > and other contributors:
 >
 > https://github.com/JuliaLang/julia-emacs/contributors
