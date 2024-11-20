@@ -1,8 +1,7 @@
 ;;; julia-mode-tests.el --- Tests for julia-mode.el
 
-;; Copyright (C) 2009-2014 Julia contributors
+;; Copyright (C) 2009-2024 Julia contributors
 ;; URL: https://github.com/JuliaLang/julia
-;; Version: 0.3
 ;; Keywords: languages
 
 ;;; Usage:
