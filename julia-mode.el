@@ -782,6 +782,7 @@ With positive ARG search backwards else search forward.
 ARG nil or 0 defaults to 1.  When searching backwards,
 nested defuns are handled depending on current point position.
 Return non-nil (point) if point moved to `beginning-of-defun'."
+  (interactive)	
   (when (or (null arg) (= arg 0)) (setq arg 1))
   (let ((found))
     (while (and (not (= arg 0))
