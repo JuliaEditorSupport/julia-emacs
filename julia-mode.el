@@ -187,7 +187,7 @@ partial match for LaTeX completion, or `nil' when not applicable."
         (group "'")        ; start single quote of character constant
         (or                ; two alternatives
          (not (any "\\"))  ; one character, not backslash
-	     (seq "\\"         ; sequence of a backslash followed by ...
+         (seq "\\"         ; sequence of a backslash followed by ...
               (or          ; five alternatives
                (any "\\'\"abfnrtv")          ; single character escape
                (repeat 1 3 (any "0-7"))      ; octal escape
@@ -485,8 +485,8 @@ As a result, it is true inside \"foo\", \\=`foo\\=` and \\='f\\='."
 KW-LIST is a list of strings.  The word at point is not considered
 a keyword if used as a field name, X.word, or quoted, :word."
   (and (or (bobp)
-	   (and (not (equal (char-before (point)) ?.))
-		(not (equal (char-before (point)) ?:))))
+       (and (not (equal (char-before (point)) ?.))
+        (not (equal (char-before (point)) ?:))))
        (not (looking-at "("))           ; handle "function(" when on (
        (member (current-word t) kw-list)
        ;; 'end' is not a keyword when used for indexing, e.g. foo[end-2]
@@ -553,9 +553,9 @@ Do not move back beyond MIN."
   (setq min (max min (point-min)))
   (let ((pos (julia-last-open-block-pos min)))
     (and pos
-	 (progn
-	   (goto-char pos)
-	   (+ julia-indent-offset (julia-block-open-indentation))))))
+     (progn
+       (goto-char pos)
+       (+ julia-indent-offset (julia-block-open-indentation))))))
 
 (defun julia-block-open-indentation ()
   "Get the current indentation or the start of a parenthetical block."
@@ -884,7 +884,7 @@ If there is not a LaTeX-like symbol at point, return nil."
                     ;; "\^(", "\1/", and "\^=)" are valid.
                     (member (char-syntax (char-before)) '(?\s ?< ?> ?\\))))
       (backward-char))
-    (when (= ?\\ (char-before))
+    (when (and (not (bobp)) (= ?\\ (char-before)))
       (- (point) 1))))
 
 ;; Sometimes you want to complete a symbol `point' is in middle of
