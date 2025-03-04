@@ -913,14 +913,15 @@ end" 'julia-end-of-defun "function f(x)" "return fact(x)[ \n]+end" 'end))
 ;;;
 
 (defun julia--find-latex (contents position)
-  "Find bounds of LaTeX symbol in CONTENTS with point at POSITION, `'((start . end) string)'."
+  "Find bounds of LaTeX symbol in CONTENTS with point at POSITION, `'((start . end) string)'. Return NIL if no symbol is found."
   (with-temp-buffer
     (julia-mode)
     (insert contents)
     (goto-char position)
-    (let* ((beg (julia--latexsub-start-symbol))
-           (end (julia-mode--latexsubs-longest-partial-end beg)))
-      (list (cons beg end) (buffer-substring beg end)))))
+    (let ((beg (julia--latexsub-start-symbol)))
+      (when beg
+        (let ((end (julia-mode--latexsubs-longest-partial-end beg)))
+          (list (cons beg end) (buffer-substring beg end)))))))
 
 (ert-deftest julia--test-find-latex ()
   (should (equal (julia--find-latex "\\alpha " 7) '((1 . 7) "\\alpha")))
@@ -929,7 +930,8 @@ end" 'julia-end-of-defun "function f(x)" "return fact(x)[ \n]+end" 'end))
   (should (equal (julia--find-latex "x\\alpha " 3) '((2 . 8) "\\alpha")))
   (should (equal (julia--find-latex "\\kappa\\alpha(" 13) '((7 . 13) "\\alpha")))
   (should (equal (julia--find-latex "\\kappa\\alpha(" 4) '((1 . 7) "\\kappa")))
-  (should (equal (julia--find-latex "α\\hat_mean" 3) '((2 . 6) "\\hat"))))
+  (should (equal (julia--find-latex "α\\hat_mean" 3) '((2 . 6) "\\hat")))
+  (should (not (julia--find-latex "   later" 1))))
 
 ;;;
 ;;; abbrev tests
