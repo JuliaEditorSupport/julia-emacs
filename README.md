@@ -5,7 +5,6 @@
 
 [Emacs](https://www.gnu.org/software/emacs/) major mode for [the Julia programming language](https://julialang.org/).
 
-
 ## Installation
 
 ### Installing from MELPA
@@ -41,12 +40,28 @@ To get the latest version of `julia-mode`, clone this repository and then use:
 (require 'julia-mode)
 ```
 
+## Configuration
+
+You can customize all options in this package with `M-x customize-mode julia-mode` using the interactive Emacs interface.
+
+Replacement of LaTeX symbols now uses the generic Emacs API. To get back the previous mechanism, use
+
+``` elisp
+(define-key julia-mode-map (kbd "TAB") 'julia-latexsub-or-indent)
+```
+
+## Related packages
+
+- [Julia major mode using tree-sitter](https://github.com/JuliaEditorSupport/julia-ts-mode)
+- [make using Julia’s language server easier with eglot](https://github.com/non-Jedi/eglot-jl/)
+- [julia-repl: run an inferior Julia REPL in Emacs](https://github.com/tpapp/julia-repl/)
+- [a development environment and REPL interaction package for Julia in the spirit of Common Lisp’s SLIME](https://github.com/gcv/julia-snail)
+
 ## Contributing
 
 Contributions are welcome, in the form of pull requests.
 
 We do our best to provide feedback within 2 weeks. Feel free bump the PR thread with a comment after that.
-
 
 ### Submitting Pull Requests
 
@@ -55,7 +70,6 @@ We do our best to provide feedback within 2 weeks. Feel free bump the PR thread 
 - Do add a short summary in the *Unreleased* section of the [CHANGELOG](CHANGELOG.md#unreleased).
 
 - Do use the `rx` macro (S-expressions) whenever rewriting regular expressions or introducing new ones. This keeps the code much more readable.
-
 
 ### Working With Tests
 
