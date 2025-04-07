@@ -884,7 +884,7 @@ If there is not a LaTeX-like symbol at point, return nil."
                     ;; "\^(", "\1/", and "\^=)" are valid.
                     (member (char-syntax (char-before)) '(?\s ?< ?> ?\\))))
       (backward-char))
-    (when (= ?\\ (char-before))
+    (when (and (not (bobp)) (= ?\\ (char-before)))
       (- (point) 1))))
 
 ;; Sometimes you want to complete a symbol `point' is in middle of
