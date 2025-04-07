@@ -997,7 +997,7 @@ command is only entered if it is supported in Julia. The
 following commands are defined:
 
 \\{LaTeX-math-mode-map}"
-      nil nil (list (cons (LaTeX-math-abbrev-prefix) LaTeX-math-keymap))
+      :keymap (list (cons (LaTeX-math-abbrev-prefix) LaTeX-math-keymap))
       (if julia-math-mode
           (setq-local LaTeX-math-insert-function #'julia-math-insert)))))
 
