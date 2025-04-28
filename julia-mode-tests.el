@@ -880,6 +880,24 @@ f(x) = x + 1" 'beginning-of-defun "\\+" 4))
     "f(x)::Int8 = 
 x *x" 'end-of-defun "(" "*x" 'end))
 
+(ert-deftest julia--test-end-of-defun-assn-with-empty-lines ()
+  "Point should move to end of assignment function."
+  (julia--should-move-point
+   "f(x)::Int8 =
+
+# no comment
+x*x" 'end-of-defun "(" "*x" 'end))
+
+(ert-deftest julia-test-end-of-defun-with-empty-lines ()
+  "Point should move to end of function."
+  (julia--should-move-point
+   "
+function forty_two()
+
+# no comment
+    return 42
+end" 'end-of-defun 0 "end" 'end))
+
 (ert-deftest julia--test-end-of-defun-nested-1 ()
   "Point should move to end of inner function when called from inner."
   (julia--should-move-point
