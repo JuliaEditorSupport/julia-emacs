@@ -2,7 +2,7 @@
 
 ;; Copyright (C) 2009-2014 Julia contributors, 2015-2024 julia-mode.el contributors
 ;; URL: https://github.com/JuliaEditorSupport/julia-emacs
-;; Version: 1.0.2
+;; Version: 1.1.0
 ;; Keywords: languages
 ;; Package-Requires: ((emacs "26.1"))
 
