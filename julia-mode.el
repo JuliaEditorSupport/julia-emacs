@@ -452,12 +452,6 @@ As a result, it is true inside \"foo\", \\=`foo\\=` and \\='f\\='."
      ;; of overlapping triple-quotes with first escaped
      ((backward-char 2)))))
 
-(defun julia-in-multiline-string (&optional syntax-pps)
-  "Return non-nil if point is inside multi-line string using SYNTAX-PPS."
-  (and (julia-in-string syntax-pps)
-       (save-excursion (beginning-of-line)
-                       (julia-in-string syntax-pps))))
-
 (defun julia-in-brackets ()
   "Return non-nil if point is inside square brackets."
   (let ((start-pos (point))
@@ -674,7 +668,7 @@ only comments."
 (defun julia-indent-line ()
   "Indent current line of julia code."
   (interactive)
-  (if (julia-in-multiline-string)
+  (if (save-excursion (beginning-of-line) (julia-in-string))
       'noindent
     (let* ((point-offset (- (current-column) (current-indentation))))
       (indent-line-to
@@ -704,6 +698,29 @@ only comments."
       ;; to its original position (relative to indentation).
       (when (>= point-offset 0)
         (move-to-column (+ (current-indentation) point-offset))))))
+
+(defun julia-fill-paragraph (&optional justify region)
+  "`fill-paragraph-function' in julia-mode"
+  (interactive "P")
+  (let ((fill-paragraph-function nil))
+    (cond (region (fill-paragraph justify region))
+          ;; in strings, only consider the line containing the first
+          ;; non-whitespace character in the string up until the closing quote
+          ;; (not including it or its indentation).
+          ((julia-in-string)
+           (let* ((str-start (nth 8 (syntax-ppss)))
+                  (str-fill-start
+                   (save-excursion
+                     (goto-char str-start) (skip-syntax-forward " \"|>")
+                     (beginning-of-line) (point)))
+                  (str-inner-end
+                   (save-excursion
+                     (goto-char str-start) (forward-sexp)
+                     (skip-syntax-backward " \"|") (point))))
+             (save-restriction (narrow-to-region str-fill-start str-inner-end)
+                               (fill-paragraph justify))))
+          ((julia-in-comment) (fill-comment-paragraph justify))
+          (t (fill-paragraph justify region)))))
 
 
 ;;; Navigation
@@ -850,6 +867,7 @@ Return nil if point is not in a function, otherwise point."
   (setq-local indent-line-function #'julia-indent-line)
   (setq-local beginning-of-defun-function #'julia-beginning-of-defun)
   (setq-local end-of-defun-function #'julia-end-of-defun)
+  (setq-local fill-paragraph-function #'julia-fill-paragraph)
   ;; If completion before point has higher priority than around, \lamb
   ;; can get completed to \lambdamb
   (add-hook 'completion-at-point-functions
